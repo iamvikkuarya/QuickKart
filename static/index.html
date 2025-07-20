@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QuickCompare</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">QuickCompare 🔍</h1>
+    <input id="search" type="text" placeholder="Search Blinkit..." class="w-full p-3 rounded border mb-4" />
+    <button onclick="searchProduct()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Search</button>
+
+    <div id="loading" class="mt-4 text-sm text-gray-600 hidden">Loading...</div>
+    <div id="results" class="mt-6 grid grid-cols-1 gap-4"></div>
+  </div>
+
+  <script>
+    async function searchProduct() {
+      const query = document.getElementById('search').value;
+      if (!query) return;
+
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('results').innerHTML = '';
+
+      const response = await fetch('/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+
+      const data = await response.json();
+      document.getElementById('loading').style.display = 'none';
+
+      if (!Array.isArray(data)) return;
+
+      data.forEach(product => {
+        const card = `
+          <div class="bg-white rounded-lg shadow p-4 flex gap-4">
+            <img src="${product.image_url}" alt="${product.name}" class="w-24 h-24 object-contain" />
+            <div>
+              <h2 class="text-lg font-semibold">${product.name}</h2>
+              <p>${product.quantity}</p>
+              <p class="text-green-600 font-bold">${product.price}</p>
+              <p class="text-sm text-gray-500">${product.delivery_time}</p>
+              <a href="${product.product_url}" target="_blank" class="text-blue-500 underline text-sm">View on Blinkit</a>
+            </div>
+          </div>
+        `;
+        document.getElementById('results').insertAdjacentHTML('beforeend', card);
+      });
+    }
+  </script>
+</body>
+</html>
