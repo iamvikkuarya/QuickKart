@@ -1,3 +1,3 @@
-2025/07/20-13:51:48.703 2298 Reusing MANIFEST C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Sync Data\LevelDB/MANIFEST-000001
-2025/07/20-13:51:48.704 2298 Recovering log #3
-2025/07/20-13:51:48.704 2298 Reusing old log C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Sync Data\LevelDB/000003.log 
+2025/07/21-12:25:34.836 35d0 Reusing MANIFEST C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Sync Data\LevelDB/MANIFEST-000001
+2025/07/21-12:25:34.838 35d0 Recovering log #3
+2025/07/21-12:25:34.839 35d0 Reusing old log C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Sync Data\LevelDB/000003.log 

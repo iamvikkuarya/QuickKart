@@ -1,2 +1,3 @@
-2025/07/20-13:49:43.720 4e40 Creating DB C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Site Characteristics Database since it was missing.
-2025/07/20-13:49:43.734 4e40 Reusing MANIFEST C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Site Characteristics Database/MANIFEST-000001
+2025/07/20-16:24:22.649 3c48 Reusing MANIFEST C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Site Characteristics Database/MANIFEST-000001
+2025/07/20-16:24:22.650 3c48 Recovering log #3
+2025/07/20-16:24:22.650 3c48 Reusing old log C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Site Characteristics Database/000003.log 

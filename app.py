@@ -1,80 +1,94 @@
+# app.py
+import sqlite3
+import json
+import time
 from flask import Flask, request, jsonify
-from playwright.sync_api import sync_playwright, TimeoutError
-from bs4 import BeautifulSoup
+from blinkit_scraper import run_scraper, product_key, is_complete
 
 app = Flask(__name__)
+DB_PATH = 'product.db'
 
-def run_scraper(search_query):
-    results = []
-    with sync_playwright() as p:
-        browser_context = p.chromium.launch_persistent_context(
-            user_data_dir="./user_data",
-            headless=True,
-            viewport={"width": 411, "height": 731},
-            user_agent="Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2)...",
-            device_scale_factor=2.625,
-            is_mobile=True,
-            has_touch=True,
-            locale="en-US",
-            geolocation={"latitude": 18.5204, "longitude": 73.8567},
-            permissions=["geolocation"],
+def create_table_if_not_exists():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            query TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            data TEXT NOT NULL,
+            timestamp INTEGER NOT NULL
         )
+    ''')
+    conn.commit()
+    conn.close()
 
-        page = browser_context.pages[0] if browser_context.pages else browser_context.new_page()
-        page.goto("https://www.blinkit.com", wait_until="domcontentloaded")
+create_table_if_not_exists()
 
-        try:
-            page.locator('div.DownloadAppModal__BackButtonIcon-sc-1wef47t-14').click(timeout=1000)
-        except TimeoutError:
-            pass
+def get_related_results(query, platform, min_results=10, expiry_seconds=600):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''SELECT data, timestamp FROM products 
+           WHERE platform = ? 
+           ORDER BY timestamp DESC''',
+        (platform,)
+    )
+    all_data = []
+    seen_urls = set()
+    now = int(time.time())
 
-        try:
-            page.locator('div.GetLocationModal__ButtonContainer-sc-jc7b49-5 > div:nth-child(1)').click(timeout=1000)
-        except TimeoutError:
-            pass
+    for row in c.fetchall():
+        data, timestamp = row
+        if now - timestamp > expiry_seconds:
+            continue
+        parsed = json.loads(data)
+        filtered = [
+            item for item in parsed
+            if query.lower() in item.get("name", "").lower()
+            and product_key(item) not in seen_urls
+        ]
+        for item in filtered:
+            seen_urls.add(product_key(item))
+        all_data.extend(filtered)
+        if len(all_data) >= min_results:
+            break
+    conn.close()
+    return all_data if len(all_data) >= min_results else None
 
-        try:
-            page.locator('div.SearchBar__Container-sc-16lps2d-3.ZIGuc > a').click(timeout=5000)
-            input_box = page.wait_for_selector("input", timeout=5000)
-            input_box.fill(search_query)
-            input_box.press("Enter")
-        except TimeoutError:
-            return []
-
-        for _ in range(5):
-            page.mouse.wheel(0, 1500)
-            page.wait_for_timeout(1000)
-
-        cards = page.query_selector_all('div[style*="grid-column: span 6"]')
-        for card in cards:
-            prod_id = card.get_attribute("id")
-            if not prod_id:
-                continue
-
-            url = f"https://blinkit.com/prn/x/prid/{prod_id}"
-            html = card.inner_html()
-            soup = BeautifulSoup(html, "html.parser")
-
-            results.append({
-                "name": soup.select_one("div.tw-text-300").get_text(strip=True) if soup.select_one("div.tw-text-300") else "N/A",
-                "price": soup.select_one("div.tw-text-200.tw-font-semibold").get_text(strip=True) if soup.select_one("div.tw-text-200.tw-font-semibold") else "N/A",
-                "quantity": soup.select_one("div.tw-text-200.tw-font-medium").get_text(strip=True) if soup.select_one("div.tw-text-200.tw-font-medium") else "N/A",
-                "delivery_time": soup.select_one("div.tw-text-050").get_text(strip=True) if soup.select_one("div.tw-text-050") else "N/A",
-                "image_url": soup.select_one("img")['src'] if soup.select_one("img") else "N/A",
-                "product_url": url,
-            })
-
-
-        browser_context.close()
-    return results
+def save_to_db(query, platform, result):
+    unique = {}
+    for item in result:
+        key = product_key(item)
+        if key and is_complete(item):
+            unique[key] = item
+    if not unique:
+        return
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        'INSERT INTO products (query, platform, data, timestamp) VALUES (?, ?, ?, ?)',
+        (query, platform, json.dumps(list(unique.values())), int(time.time()))
+    )
+    conn.commit()
+    conn.close()
 
 @app.route('/search', methods=['POST'])
 def search():
     data = request.get_json()
-    query = data.get('query')
+    query = data.get('query', '').strip().lower()
     if not query:
         return jsonify({"error": "Missing query"}), 400
+
+    cached_results = get_related_results(query=query, platform="blinkit", min_results=10)
+    if cached_results:
+        print(f"✅ Served cached results for '{query}'")
+        return jsonify(cached_results)
+
+    print(f"🔄 Scraping for fresh results of '{query}'")
     result = run_scraper(query)
+    if result:
+        save_to_db(query=query, platform="blinkit", result=result)
     return jsonify(result)
 
 @app.route('/')
