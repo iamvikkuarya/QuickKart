@@ -77,6 +77,10 @@ def save_to_db(query, platform, result):
 def search():
     data = request.get_json()
     query = data.get('query', '').strip().lower()
+    lat = data.get('latitude')
+    lng = data.get('longitude')
+
+    print(f"📦 Received: query={query}, lat={lat}, lng={lng}")
     if not query:
         return jsonify({"error": "Missing query"}), 400
 
@@ -85,8 +89,8 @@ def search():
         print(f"✅ Served cached results for '{query}'")
         return jsonify(cached_results)
 
-    print(f"🔄 Scraping for fresh results of '{query}'")
-    result = run_scraper(query)
+    print(f"🔄 Scraping for fresh results of '{query}' at ({lat}, {lng})")
+    result = run_scraper(query, latitude=lat, longitude=lng)
     if result:
         save_to_db(query=query, platform="blinkit", result=result)
     return jsonify(result)

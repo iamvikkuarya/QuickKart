@@ -8,7 +8,11 @@ def product_key(product):
 def is_complete(product):
     return product.get("image_url") not in ["", "N/A", None] and product.get("price") not in ["", "N/A", None]
 
-def run_scraper(search_query):
+def run_scraper(search_query, latitude=None, longitude=None):
+    # Fallback to Pune if no location provided
+    latitude = latitude if latitude is not None else 18.5204
+    longitude = longitude if longitude is not None else 73.8567
+
     results = []
     with sync_playwright() as p:
         browser_context = p.chromium.launch_persistent_context(
@@ -20,7 +24,7 @@ def run_scraper(search_query):
             is_mobile=True,
             has_touch=True,
             locale="en-US",
-            geolocation={"latitude": 18.5204, "longitude": 73.8567},
+            geolocation={"latitude": latitude, "longitude": longitude},
             permissions=["geolocation"],
         )
 

@@ -23,6 +23,13 @@
     />
   </div>
 
+  <!-- 📍 Location Display -->
+  <div class="text-center mt-4">
+  <span id="user-location" class="inline-block text-gray-600 text-sm italic bg-gray-100 rounded-full px-3 py-1">
+    📍 Detecting location...
+  </span>
+</div>
+
   <!-- Platform Logos -->
   <div class="flex justify-center items-center gap-8 mt-6 mb-8">
     <img src="static/assets/blinkit.png" alt="Blinkit" class="h-8" />
@@ -50,11 +57,32 @@
       document.getElementById('results').innerHTML = '';
       document.getElementById('loading').style.display = 'block';
 
+      let locationData = { latitude: 18.5204, longitude: 73.8567 }; // Default: Pune
+
+      try {
+        await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              locationData.latitude = pos.coords.latitude;
+              locationData.longitude = pos.coords.longitude;
+              resolve();
+            },
+            (err) => {
+              console.warn('Geolocation denied or failed. Using default location (Pune).');
+              resolve(); // use default values
+            },
+            { timeout: 3000 }
+          );
+        });
+      } catch (err) {
+        console.warn('Geolocation error fallback hit:', err);
+      }
+
       try {
         const response = await fetch('/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query })
+          body: JSON.stringify({ query, ...locationData })
         });
 
         const data = await response.json();
