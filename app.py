@@ -90,7 +90,12 @@ def search():
         return jsonify(cached_results)
 
     print(f"🔄 Scraping for fresh results of '{query}' at ({lat}, {lng})")
-    result = run_scraper(query, latitude=lat, longitude=lng)
+
+    # Ensure we have valid lat/lng
+    latitude = float(lat) if lat else 18.5204
+    longitude = float(lng) if lng else 73.8567
+
+    result = run_scraper(query, latitude=latitude, longitude=longitude)
     if result:
         save_to_db(query=query, platform="blinkit", result=result)
     return jsonify(result)

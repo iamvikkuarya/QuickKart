@@ -1,3 +1,3 @@
-2025/07/23-22:45:28.646 3d64 Reusing MANIFEST C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Local Storage\leveldb/MANIFEST-000001
-2025/07/23-22:45:28.651 3d64 Recovering log #8
-2025/07/23-22:45:28.652 3d64 Reusing old log C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Local Storage\leveldb/000008.log 
+2025/07/25-00:05:40.666 1340 Reusing MANIFEST C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Local Storage\leveldb/MANIFEST-000001
+2025/07/25-00:05:40.671 1340 Recovering log #11
+2025/07/25-00:05:40.673 1340 Reusing old log C:\Users\Vikku\Desktop\vault\quickcompare\user_data\Default\Local Storage\leveldb/000011.log 

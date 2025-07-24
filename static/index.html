@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>QuickCompare</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA&libraries=places"></script>
 </head>
 <body class="bg-white min-h-screen flex flex-col items-center justify-center">
 
@@ -25,10 +26,10 @@
 
   <!-- 📍 Location Display -->
   <div class="text-center mt-4">
-  <span id="user-location" class="inline-block text-gray-600 text-sm italic bg-gray-100 rounded-full px-3 py-1">
-    📍 Detecting location...
-  </span>
-</div>
+    <span id="user-location" class="inline-block text-gray-600 text-sm italic bg-gray-100 rounded-full px-3 py-1">
+      📍 Detecting location...
+    </span>
+  </div>
 
   <!-- Platform Logos -->
   <div class="flex justify-center items-center gap-8 mt-6 mb-8">
@@ -49,34 +50,44 @@
   <div id="results" class="w-full max-w-4xl mt-10 px-6 grid grid-cols-1 gap-4 mb-10"></div>
 
   <script>
+    let locationData = { latitude: 18.5204, longitude: 73.8567 }; // default Pune
+
+    function initLocation() {
+      const locationDisplay = document.getElementById("user-location");
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            locationData.latitude = position.coords.latitude;
+            locationData.longitude = position.coords.longitude;
+
+            const geocoder = new google.maps.Geocoder();
+            const latlng = { lat: locationData.latitude, lng: locationData.longitude };
+
+            geocoder.geocode({ location: latlng }, (results, status) => {
+              if (status === "OK" && results[0]) {
+                locationDisplay.textContent = "📍 " + results[0].formatted_address;
+              } else {
+                locationDisplay.textContent = "📍 Location detected";
+              }
+            });
+          },
+          () => {
+            locationDisplay.textContent = "📍 Unable to get location. Using default (Pune)";
+          },
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      } else {
+        locationDisplay.textContent = "📍 Geolocation not supported.";
+      }
+    }
+
     async function searchProduct() {
       const query = document.getElementById('search').value.trim();
       if (!query) return;
 
-      // UI Feedback
       document.getElementById('results').innerHTML = '';
       document.getElementById('loading').style.display = 'block';
-
-      let locationData = { latitude: 18.5204, longitude: 73.8567 }; // Default: Pune
-
-      try {
-        await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              locationData.latitude = pos.coords.latitude;
-              locationData.longitude = pos.coords.longitude;
-              resolve();
-            },
-            (err) => {
-              console.warn('Geolocation denied or failed. Using default location (Pune).');
-              resolve(); // use default values
-            },
-            { timeout: 3000 }
-          );
-        });
-      } catch (err) {
-        console.warn('Geolocation error fallback hit:', err);
-      }
 
       try {
         const response = await fetch('/search', {
@@ -113,6 +124,8 @@
         document.getElementById('results').innerHTML = '<p class="text-center text-red-500">Error fetching results. Try again.</p>';
       }
     }
+
+    window.onload = initLocation;
   </script>
 
 </body>

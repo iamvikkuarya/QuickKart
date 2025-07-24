@@ -32,16 +32,20 @@ def run_scraper(search_query, latitude=None, longitude=None):
         page.goto("https://www.blinkit.com", wait_until="domcontentloaded")
 
         try:
+            # Dismiss "Get the app" popup
             page.locator('div.DownloadAppModal__BackButtonIcon-sc-1wef47t-14').click(timeout=1000)
         except TimeoutError:
             pass
 
         try:
-            page.locator('div.GetLocationModal__ButtonContainer-sc-jc7b49-5 > div:nth-child(1)').click(timeout=1000)
+            # Click "Use my location" button
+            page.locator('div.GetLocationModal__ButtonContainer-sc-jc7b49-5 > div:nth-child(1)').click(timeout=2000)
+            page.wait_for_timeout(1500)  # Wait for location to apply
         except TimeoutError:
             pass
 
         try:
+            # Open search bar
             page.locator('div.SearchBar__Container-sc-16lps2d-3.ZIGuc > a').click(timeout=5000)
             input_box = page.wait_for_selector("input", timeout=5000)
             input_box.fill(search_query)
@@ -49,6 +53,7 @@ def run_scraper(search_query, latitude=None, longitude=None):
         except TimeoutError:
             return []
 
+        # Scroll to load products
         for _ in range(5):
             page.mouse.wheel(0, 1500)
             page.wait_for_timeout(1000)
