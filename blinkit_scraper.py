@@ -1,82 +1,100 @@
-# blinkit_scraper.py
-
 from playwright.sync_api import sync_playwright, TimeoutError
+import time
+from bs4 import BeautifulSoup
 
-def product_key(product):
-    return product.get("product_url", "").strip().lower()
+# Retry utility
+def try_until_success(fn, retries=3, delay=1):
+    for i in range(retries):
+        try:
+            return fn()
+        except TimeoutError as e:
+            print(f"⏳ Retry {i+1}/{retries} after error: {e}")
+            time.sleep(delay)
+    raise TimeoutError("All retries failed")
 
-def is_complete(product):
-    return product.get("image_url") not in ["", "N/A", None] and product.get("price") not in ["", "N/A", None]
-
-def run_scraper(search_query, latitude=None, longitude=None):
-    # Fallback to Pune if no location provided
-    latitude = latitude if latitude is not None else 18.5204
-    longitude = longitude if longitude is not None else 73.8567
-
-    results = []
+def run_scraper(search_query, latitude=18.5204, longitude=73.8567):
     with sync_playwright() as p:
-        browser_context = p.chromium.launch_persistent_context(
-            user_data_dir="./user_data",
-            headless=False,
-            viewport={"width": 411, "height": 731},
-            user_agent="Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2)...",
-            device_scale_factor=2.625,
-            is_mobile=True,
-            has_touch=True,
-            locale="en-US",
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context(
             geolocation={"latitude": latitude, "longitude": longitude},
-            permissions=["geolocation"],
+            permissions=["geolocation"]
         )
+        page = context.new_page()
 
-        page = browser_context.pages[0] if browser_context.pages else browser_context.new_page()
-        page.goto("https://www.blinkit.com", wait_until="domcontentloaded")
+        print("➡️ Navigating to Blinkit")
+        try_until_success(lambda: page.goto("https://blinkit.com/", timeout=30000))
 
+        # Click Use My Location
         try:
-            # Dismiss "Get the app" popup
-            page.locator('div.DownloadAppModal__BackButtonIcon-sc-1wef47t-14').click(timeout=1000)
+            try_until_success(lambda: page.locator('button.location-box').click(timeout=3000), retries=2)
+            print("📍 Location allowed")
         except TimeoutError:
-            pass
+            print("⚠️ Location button not found")
 
+        # Search
         try:
-            # Click "Use my location" button
-            page.locator('div.GetLocationModal__ButtonContainer-sc-jc7b49-5 > div:nth-child(1)').click(timeout=2000)
-            page.wait_for_timeout(1500)  # Wait for location to apply
-        except TimeoutError:
-            pass
-
-        try:
-            # Open search bar
-            page.locator('div.SearchBar__Container-sc-16lps2d-3.ZIGuc > a').click(timeout=5000)
-            input_box = page.wait_for_selector("input", timeout=5000)
+            try_until_success(lambda: page.locator('div.SearchBar__Container-sc-16lps2d-3.ZIGuc').click(timeout=2000))
+            input_box = try_until_success(lambda: page.wait_for_selector("input", timeout=1000))
             input_box.fill(search_query)
             input_box.press("Enter")
         except TimeoutError:
+            print("❌ Search bar interaction failed")
             return []
 
-        # Scroll to load products
-        for _ in range(5):
-            page.mouse.wheel(0, 1500)
-            page.wait_for_timeout(1000)
+        print("🔎 Searching for:", search_query)
+        page.wait_for_timeout(2000)
 
-        cards = page.query_selector_all('div[style*="grid-column: span 6"]')
+        # Scroll slowly to load more cards
+        last_height = 0
+        for _ in range(2):
+            page.mouse.wheel(0, 1000)
+            time.sleep(1.0)
+            new_height = page.evaluate("document.body.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
 
-        for card in cards:
-            prod_id = card.get_attribute("id")
-            if not prod_id:
+        # Wait for product card container
+        try:
+            container = try_until_success(lambda: page.wait_for_selector("div.categories__body", timeout=3000))
+        except TimeoutError:
+            print("❌ Product container not found")
+            return []
+
+        html = page.content()
+        soup = BeautifulSoup(html, "html.parser")
+        card_divs = soup.find_all("div", {"role": "button", "id": True})
+
+        results = []
+        for card in card_divs:
+            try:
+                name = card.select_one("div.tw-text-300").get_text(strip=True)
+                price = card.select_one("div.tw-text-200.tw-font-semibold").get_text(strip=True)
+                quantity = card.select_one("div.tw-text-200.tw-font-medium").get_text(strip=True)
+                image_url = card.select_one("img")["src"]
+                delivery_time = card.select_one("div.tw-text-050").get_text(strip=True)
+                product_id = card["id"]
+                url = f"https://blinkit.com/prn/x/prid/{product_id}" if product_id else None
+
+                results.append({
+                    "name": name,
+                    "price": price,
+                    "quantity": quantity,
+                    "image_url": image_url,
+                    "delivery_time": delivery_time,
+                    "product_url": url
+                })
+            except Exception as e:
+                print(f"⚠️ Error parsing product card: {e}")
                 continue
 
-            url = f"https://blinkit.com/prn/x/prid/{prod_id}"
-            image_element = card.query_selector("img")
-            image_url = image_element.get_attribute("src") if image_element else "N/A"
+        print(f"✅ Scraped {len(results)} items")
+        browser.close()
+        return results
 
-            results.append({
-                "name": card.query_selector("div.tw-text-300").inner_text().strip() if card.query_selector("div.tw-text-300") else "N/A",
-                "price": card.query_selector("div.tw-text-200.tw-font-semibold").inner_text().strip() if card.query_selector("div.tw-text-200.tw-font-semibold") else "N/A",
-                "quantity": card.query_selector("div.tw-text-200.tw-font-medium").inner_text().strip() if card.query_selector("div.tw-text-200.tw-font-medium") else "N/A",
-                "delivery_time": card.query_selector("div.tw-text-050").inner_text().strip() if card.query_selector("div.tw-text-050") else "N/A",
-                "image_url": image_url,
-                "product_url": url,
-            })
+# required for app.py import
+def product_key(item):
+    return item.get("product_url")
 
-        browser_context.close()
-    return results
+def is_complete(item):
+    return all([item.get("name"), item.get("price"), item.get("product_url")])
