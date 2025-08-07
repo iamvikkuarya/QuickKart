@@ -1,13 +1,13 @@
+# Caches and user junk
 __pycache__/
+*.py[cod]
+*.log
+
+# Local environment
 .venv/
 env/
-.vscode/
-.idea/
-*.log
-*.db
-*.sqlite3
 
-# Scraping session/profile junk
-user_data*/
-desktop_user_data/
+# Browser/user data
 blinkit_desktop_profile/
+desktop_user_data/
+user_data*/
