@@ -1,0 +1,13 @@
+__pycache__/
+.venv/
+env/
+.vscode/
+.idea/
+*.log
+*.db
+*.sqlite3
+
+# Scraping session/profile junk
+user_data*/
+desktop_user_data/
+blinkit_desktop_profile/
