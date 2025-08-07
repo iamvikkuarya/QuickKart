@@ -3,42 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <title>QuickCompare</title>
+
+  <!-- Importing Tailwind CSS from CDN for utility-first styling -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA&libraries=places"></script>
+  <!-- Google Maps API integration to with Places Library convert coordinates into human-readable addresses -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA&libraries=places"></script> 
 </head>
+
+<!-- Main body setup with Tailwind: full height, centered content -->
 <body class="bg-white min-h-screen flex flex-col items-center justify-center">
 
-  <!-- Logo -->
+  <!-- App Logo / Title -->
   <div class="mb-8">
     <h1 class="text-4xl font-bold text-gray-800 tracking-tight">🛒 QuickCompare</h1>
   </div>
 
-  <!-- Search Bar -->
+  <!-- Search Input Field -->
   <div class="w-full max-w-2xl px-6">
     <input
       id="search"
       type="text"
       placeholder="Search for products..."
       class="w-full px-5 py-3 border border-gray-300 rounded-full text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-      onkeydown="if(event.key === 'Enter') searchProduct()"
-    />
+      onkeydown="if(event.key === 'Enter') searchProduct()" <!-- Trigger search on Enter -->
   </div>
 
-  <!-- 📍 Location Display -->
+  <!-- Location Status Display -->
   <div class="text-center mt-4">
     <span id="user-location" class="inline-block text-gray-600 text-sm italic bg-gray-100 rounded-full px-3 py-1">
       📍 Detecting location...
     </span>
   </div>
 
-  <!-- Platform Logos -->
+  <!-- Grocery Platform Logos (for visual indication) -->
   <div class="flex justify-center items-center gap-8 mt-6 mb-8">
     <img src="static/assets/blinkit.png" alt="Blinkit" class="h-8" />
     <img src="static/assets/zepto.png" alt="Zepto" class="h-10" />
     <img src="static/assets/instamart.png" alt="Instamart" class="h-20" />
   </div>
 
-  <!-- Loading Indicator -->
+  <!-- Progress Bar shown during fetch -->
   <div id="loading" class="w-full max-w-md px-6 mt-4 hidden">
     <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
       <div class="h-full bg-green-500 animate-pulse" style="width: 100%"></div>
@@ -46,12 +50,18 @@
     <p class="text-sm text-gray-500 mt-2 text-center">Fetching best prices...</p>
   </div>
 
-  <!-- Results -->
+  <!-- Container for Rendered Product Cards -->
   <div id="results" class="w-full max-w-4xl mt-10 px-6 grid grid-cols-1 gap-4 mb-10"></div>
 
   <script>
-    let locationData = { latitude: 18.5204, longitude: 73.8567 }; // default Pune
+    // Holds current location details (used for scraper backend request)
+    let locationData = {
+      latitude: 18.5204,       // Default to Pune
+      longitude: 73.8567,
+      address: ''              // Address required for Zepto
+    };
 
+    // Detect user's location and reverse-geocode it into an address
     function initLocation() {
       const locationDisplay = document.getElementById("user-location");
 
@@ -62,17 +72,24 @@
             locationData.longitude = position.coords.longitude;
 
             const geocoder = new google.maps.Geocoder();
-            const latlng = { lat: locationData.latitude, lng: locationData.longitude };
+            const latlng = {
+              lat: locationData.latitude,
+              lng: locationData.longitude
+            };
 
+            // Use Google Maps API to convert coordinates to readable address
             geocoder.geocode({ location: latlng }, (results, status) => {
               if (status === "OK" && results[0]) {
-                locationDisplay.textContent = "📍 " + results[0].formatted_address;
+                const readable = results[0].formatted_address;
+                locationData.address = readable;
+                locationDisplay.textContent = "📍 " + readable;
               } else {
                 locationDisplay.textContent = "📍 Location detected";
               }
             });
           },
           () => {
+            // If user blocks or it fails, use fallback
             locationDisplay.textContent = "📍 Unable to get location. Using default (Pune)";
           },
           { enableHighAccuracy: true, timeout: 5000 }
@@ -82,28 +99,37 @@
       }
     }
 
+    // Triggered when user submits a product search
     async function searchProduct() {
       const query = document.getElementById('search').value.trim();
-      if (!query) return;
+      if (!query) return;  // Ignore empty queries
 
-      document.getElementById('results').innerHTML = '';
-      document.getElementById('loading').style.display = 'block';
+      document.getElementById('results').innerHTML = '';          // Clear old results
+      document.getElementById('loading').style.display = 'block'; // Show loader
 
       try {
+        // Send POST request to backend with search query + location
         const response = await fetch('/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, ...locationData })
+          body: JSON.stringify({
+            query,
+            latitude: locationData.latitude,
+            longitude: locationData.longitude,
+            address: locationData.address
+          })
         });
 
         const data = await response.json();
-        document.getElementById('loading').style.display = 'none';
+        document.getElementById('loading').style.display = 'none';  // Hide loader
 
         if (!Array.isArray(data) || data.length === 0) {
+          // No products found
           document.getElementById('results').innerHTML = '<p class="text-center text-gray-500">No products found.</p>';
           return;
         }
 
+        // Loop over returned products and inject cards into DOM
         data.forEach(product => {
           const card = `
             <div class="bg-white rounded-lg shadow-md p-4 flex gap-4 items-start">
@@ -120,11 +146,13 @@
           document.getElementById('results').insertAdjacentHTML('beforeend', card);
         });
       } catch (err) {
+        // Handle fetch errors gracefully
         document.getElementById('loading').style.display = 'none';
         document.getElementById('results').innerHTML = '<p class="text-center text-red-500">Error fetching results. Try again.</p>';
       }
     }
 
+    // Run location detection when page loads
     window.onload = initLocation;
   </script>
 
