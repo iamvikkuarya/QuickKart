@@ -4,13 +4,12 @@
   <meta charset="UTF-8" />
   <title>QuickCompare</title>
 
-  <!-- Importing Tailwind CSS from CDN for utility-first styling -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Maps API integration to with Places Library convert coordinates into human-readable addresses -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA&libraries=places"></script> 
+  <!-- Google Maps API (Places) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA&libraries=places"></script>
 </head>
 
-<!-- Main body setup with Tailwind: full height, centered content -->
 <body class="bg-white min-h-screen flex flex-col items-center justify-center">
 
   <!-- App Logo / Title -->
@@ -25,7 +24,8 @@
       type="text"
       placeholder="Search for products..."
       class="w-full px-5 py-3 border border-gray-300 rounded-full text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-      onkeydown="if(event.key === 'Enter') searchProduct()" <!-- Trigger search on Enter -->
+      onkeydown="if(event.key === 'Enter') searchProduct()"
+    />
   </div>
 
   <!-- Location Status Display -->
@@ -35,11 +35,21 @@
     </span>
   </div>
 
-  <!-- Grocery Platform Logos (for visual indication) -->
-  <div class="flex justify-center items-center gap-8 mt-6 mb-8">
+  <!-- Grocery Platform Logos (for visual indication only) -->
+  <div class="flex justify-center items-center gap-8 mt-6 mb-6">
     <img src="static/assets/blinkit.png" alt="Blinkit" class="h-8" />
     <img src="static/assets/zepto.png" alt="Zepto" class="h-10" />
     <img src="static/assets/instamart.png" alt="Instamart" class="h-20" />
+  </div>
+
+  <!-- 🔽 New platform filter buttons -->
+  <div class="flex gap-3 mb-6" id="platform-filters">
+    <button onclick="filterPlatform('all')" id="btn-all"
+      class="px-3 py-1 rounded-full border bg-green-500 text-white text-sm font-medium">All</button>
+    <button onclick="filterPlatform('blinkit')" id="btn-blinkit"
+      class="px-3 py-1 rounded-full border text-sm">Blinkit</button>
+    <button onclick="filterPlatform('zepto')" id="btn-zepto"
+      class="px-3 py-1 rounded-full border text-sm">Zepto</button>
   </div>
 
   <!-- Progress Bar shown during fetch -->
@@ -51,45 +61,53 @@
   </div>
 
   <!-- Container for Rendered Product Cards -->
-  <div id="results" class="w-full max-w-4xl mt-10 px-6 grid grid-cols-1 gap-4 mb-10"></div>
+  <div id="results" class="w-full max-w-4xl mt-6 px-6 grid grid-cols-1 gap-4 mb-10"></div>
 
   <script>
-    // Holds current location details (used for scraper backend request)
-    let locationData = {
-      latitude: 18.5204,       // Default to Pune
-      longitude: 73.8567,
-      address: ''              // Address required for Zepto
+    let locationData = { latitude: 18.5204, longitude: 73.8567, address: '' };
+    let _lastResults = [];   // 🔽 keep last search results for filtering
+    let _activePlatform = 'all';
+
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>"']/g, m => (
+        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
+      ));
+    }
+
+    const PLATFORM_META = {
+      blinkit: { name: "Blinkit", logo: "static/assets/blinkit.png" },
+      zepto:   { name: "Zepto",   logo: "static/assets/zepto.png"  },
+      instamart: { name: "Instamart", logo: "static/assets/instamart.png" }
     };
 
-    // Detect user's location and reverse-geocode it into an address
+    function platformBadge(platform) {
+      const key = (platform || "").toLowerCase();
+      const meta = PLATFORM_META[key] || { name: platform || "Unknown", logo: "" };
+      const img = meta.logo ? `<img src="${meta.logo}" alt="${escapeHtml(meta.name)}" class="h-4 w-4 inline-block mr-1 align-middle">` : "";
+      return `<span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs">
+        ${img}<span class="align-middle">${escapeHtml(meta.name)}</span>
+      </span>`;
+    }
+
     function initLocation() {
       const locationDisplay = document.getElementById("user-location");
-
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             locationData.latitude = position.coords.latitude;
             locationData.longitude = position.coords.longitude;
-
             const geocoder = new google.maps.Geocoder();
-            const latlng = {
-              lat: locationData.latitude,
-              lng: locationData.longitude
-            };
-
-            // Use Google Maps API to convert coordinates to readable address
+            const latlng = { lat: locationData.latitude, lng: locationData.longitude };
             geocoder.geocode({ location: latlng }, (results, status) => {
-              if (status === "OK" && results[0]) {
-                const readable = results[0].formatted_address;
-                locationData.address = readable;
-                locationDisplay.textContent = "📍 " + readable;
+              if (status === "OK" && results && results[0]) {
+                locationData.address = results[0].formatted_address;
+                locationDisplay.textContent = "📍 " + locationData.address;
               } else {
                 locationDisplay.textContent = "📍 Location detected";
               }
             });
           },
           () => {
-            // If user blocks or it fails, use fallback
             locationDisplay.textContent = "📍 Unable to get location. Using default (Pune)";
           },
           { enableHighAccuracy: true, timeout: 5000 }
@@ -99,16 +117,64 @@
       }
     }
 
-    // Triggered when user submits a product search
+    function renderResults(items = []) {
+      const container = document.getElementById("results");
+      if (!container) return;
+
+      if (!Array.isArray(items) || !items.length) {
+        container.innerHTML = '<p class="text-center text-gray-500">No products found.</p>';
+        return;
+      }
+
+      const priceToNumber = p => Number((p || "").replace(/[^\d.]/g, "")) || Infinity;
+      items.sort((a, b) => priceToNumber(a.price) - priceToNumber(b.price));
+
+      container.innerHTML = items.map(product => {
+        const platform = (product.platform || "").toLowerCase();
+        const badge = platformBadge(platform);
+
+        const img = product.image_url
+          ? `<img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name || '')}"
+                 class="w-24 h-24 object-contain rounded bg-gray-50"
+                 onerror="this.style.display='none';" />`
+          : `<div class="w-24 h-24 rounded bg-gray-100"></div>`;
+
+        const name = escapeHtml(product.name || "Unnamed");
+        const qty = escapeHtml(product.quantity || "N/A");
+        const price = escapeHtml(product.price || "N/A");
+        const eta = escapeHtml(product.delivery_time || "N/A");
+        const href = escapeHtml(product.product_url || "#");
+        const platformName = PLATFORM_META[platform]?.name || (product.platform || "Source");
+
+        return `
+          <a href="${href}" target="_blank" rel="noopener"
+             class="block bg-white rounded-2xl border p-4 hover:shadow transition">
+            <div class="flex gap-4 items-start">
+              ${img}
+              <div class="flex-1">
+                <div class="flex items-center justify-between gap-2">
+                  <h2 class="text-base font-semibold line-clamp-2">${name}</h2>
+                  ${badge}
+                </div>
+                <p class="text-sm text-gray-600">${qty}</p>
+                <p class="mt-1 text-green-600 font-bold">${price}</p>
+                <p class="text-xs text-gray-500">Delivery: ${eta}</p>
+                <span class="text-blue-600 underline text-sm mt-1 inline-block">View on ${escapeHtml(platformName)}</span>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join("");
+    }
+
     async function searchProduct() {
       const query = document.getElementById('search').value.trim();
-      if (!query) return;  // Ignore empty queries
+      if (!query) return;
 
-      document.getElementById('results').innerHTML = '';          // Clear old results
-      document.getElementById('loading').style.display = 'block'; // Show loader
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('loading').style.display = 'block';
 
       try {
-        // Send POST request to backend with search query + location
         const response = await fetch('/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -119,42 +185,42 @@
             address: locationData.address
           })
         });
-
         const data = await response.json();
-        document.getElementById('loading').style.display = 'none';  // Hide loader
-
-        if (!Array.isArray(data) || data.length === 0) {
-          // No products found
-          document.getElementById('results').innerHTML = '<p class="text-center text-gray-500">No products found.</p>';
-          return;
-        }
-
-        // Loop over returned products and inject cards into DOM
-        data.forEach(product => {
-          const card = `
-            <div class="bg-white rounded-lg shadow-md p-4 flex gap-4 items-start">
-              <img src="${product.image_url}" alt="${product.name}" class="w-24 h-24 object-contain" />
-              <div>
-                <h2 class="text-lg font-semibold">${product.name}</h2>
-                <p class="text-sm text-gray-600">${product.quantity}</p>
-                <p class="text-green-600 font-bold">${product.price}</p>
-                <p class="text-sm text-gray-500">${product.delivery_time}</p>
-                <a href="${product.product_url}" target="_blank" class="text-blue-500 underline text-sm">View on Blinkit</a>
-              </div>
-            </div>
-          `;
-          document.getElementById('results').insertAdjacentHTML('beforeend', card);
-        });
-      } catch (err) {
-        // Handle fetch errors gracefully
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('results').innerHTML = '<p class="text-center text-red-500">Error fetching results. Try again.</p>';
+
+        _lastResults = Array.isArray(data) ? data : [];
+        filterPlatform(_activePlatform); // render with current filter
+      } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('results').innerHTML =
+          '<p class="text-center text-red-500">Error fetching results. Try again.</p>';
       }
     }
 
-    // Run location detection when page loads
+    // 🔽 Platform filtering logic
+    function filterPlatform(platform) {
+      _activePlatform = platform;
+      document.querySelectorAll("#platform-filters button").forEach(btn =>
+        btn.classList.remove("bg-green-500", "text-white")
+      );
+      document.getElementById(`btn-${platform}`).classList.add("bg-green-500", "text-white");
+
+      if (platform === "all") {
+        renderResults(_lastResults);
+      } else {
+        renderResults(_lastResults.filter(x => (x.platform || "").toLowerCase() === platform));
+      }
+    }
+
     window.onload = initLocation;
   </script>
 
 </body>
 </html>
+
+
+
+
+
+
+AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA

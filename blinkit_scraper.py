@@ -12,12 +12,26 @@ def try_until_success(fn, retries=3, delay=1):
             time.sleep(delay)
     raise TimeoutError("All retries failed")
 
-def run_scraper(search_query, latitude=18.5204, longitude=73.8567):
+def run_scraper(search_query, latitude=18.502668, longitude=73.807327):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        browser = p.chromium.launch(
+            headless=False,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-blink-features=AutomationControlled",
+            ])
         context = browser.new_context(
-            geolocation={"latitude": latitude, "longitude": longitude},
-            permissions=["geolocation"]
+            user_agent=UA,
+                viewport={"width": 1366, "height": 2000},  # taller to force more content
+                geolocation={"latitude": latitude, "longitude": longitude},
+                permissions=["geolocation"],
+                locale="en-IN",
+                timezone_id="Asia/Kolkata",
+        )
+        context.add_init_script(
+                'Object.defineProperty(navigator, "webdriver", { get: () => undefined });'
         )
         page = context.new_page()
 
@@ -47,12 +61,8 @@ def run_scraper(search_query, latitude=18.5204, longitude=73.8567):
         # Scroll slowly to load more cards
         last_height = 0
         for _ in range(2):
-            page.mouse.wheel(0, 1000)
-            time.sleep(1.0)
-            new_height = page.evaluate("document.body.scrollHeight")
-            if new_height == last_height:
-                break
-            last_height = new_height
+            page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+            page.wait_for_timeout(800)
 
         # Wait for product card container
         try:
@@ -82,7 +92,8 @@ def run_scraper(search_query, latitude=18.5204, longitude=73.8567):
                     "quantity": quantity,
                     "image_url": image_url,
                     "delivery_time": delivery_time,
-                    "product_url": url
+                    "product_url": url,
+                    "platform": "blinkit"
                 })
             except Exception as e:
                 print(f"⚠️ Error parsing product card: {e}")
