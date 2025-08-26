@@ -1,8 +1,10 @@
 # app.py
 import time
+from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, request, jsonify
 from blinkit_scraper import run_scraper
 from zepto_scraper import run_zepto_scraper
+from instamart_scraper import run_instamart_scraper
 
 app = Flask(__name__)
 
@@ -51,22 +53,41 @@ def search():
 
     print(f"🔄 Scraping fresh data for '{query}' at {address or (latitude, longitude)}")
 
-    # 🚀 Run scrapers
-    blinkit_results = run_scraper(query, latitude=latitude, longitude=longitude)
-    zepto_results = []
-    try:
-        zepto_results = run_zepto_scraper(query, address=address or "Pune, Maharashtra")
-    except Exception as e:
-        print(f"⚠️ Zepto scraper error: {e}")
+    # 🚀 Run scrapers concurrently
+    results = []
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        fut_blinkit = ex.submit(run_scraper, query, latitude=latitude, longitude=longitude)
+        fut_zepto = ex.submit(run_zepto_scraper, query, address=address or "Pune, Maharashtra")
+        fut_instamart = ex.submit(run_instamart_scraper, query, latitude=latitude, longitude=longitude, address=address)
 
-    result = blinkit_results + zepto_results
-    if not result:
+        # Collect results (each guarded so one failure doesn't block others)
+        try:
+            results += fut_blinkit.result() or []
+            print(f"🟢 Blinkit returned {len(results)} total so far")
+        except Exception as e:
+            print(f"⚠️ Blinkit scraper error: {e}")
+
+        try:
+            z = fut_zepto.result() or []
+            results += z
+            print(f"🟣 Zepto returned {len(z)}")
+        except Exception as e:
+            print(f"⚠️ Zepto scraper error: {e}")
+
+        try:
+            i = fut_instamart.result() or []
+            results += i
+            print(f"🟠 Instamart returned {len(i)}")
+        except Exception as e:
+            print(f"⚠️ Instamart scraper error: {e}")
+
+    if not results:
         print("⚠️ No results scraped from either platform")
 
     # 🗄️ Store in cache
-    cache[cache_key] = (time.time(), result)
+    cache[cache_key] = (time.time(), results)
 
-    return jsonify(result)
+    return jsonify(results)
 
 @app.route('/')
 def home():
