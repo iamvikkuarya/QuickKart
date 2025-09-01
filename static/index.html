@@ -148,7 +148,13 @@
           const platformName = meta.name || escapeHtml(p.platform || "Source");
 
           const price = escapeHtml(p.price || "N/A");
-          const eta = escapeHtml(p.delivery_time || "N/A");
+          let eta = "N/A";
+          if ((p.platform || "").toLowerCase() === "blinkit") {
+            eta = document.getElementById("eta-blinkit")?.textContent || "N/A";
+          }
+          if ((p.platform || "").toLowerCase() === "zepto") {
+            eta = document.getElementById("eta-zepto")?.textContent || "N/A";
+          }
           const stock = p.in_stock ? "" : `<span class="ml-2 text-xs text-red-500">Out of Stock</span>`;
 
           return `

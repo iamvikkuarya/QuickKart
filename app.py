@@ -1,5 +1,5 @@
-# app.py
 import time
+import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, request, jsonify
 
@@ -11,8 +11,11 @@ from zepto_scraper import run_zepto_scraper
 from eta_blinkit import get_blinkit_eta
 from eta_zepto import get_zepto_eta
 
-# --- NEW: merge logic ---
-from utils import merge_products   # 👈 added
+# --- Merge logic ---
+from utils import merge_products
+
+# --- DB ---
+from db import DB_NAME
 
 app = Flask(__name__)
 
@@ -25,17 +28,39 @@ eta_cache = {}
 CACHE_TTL = 300
 ETA_CACHE_TTL = 300
 
-def make_cache_key(query, address, lat, lng):
+def make_cache_key(query, address):
     norm_addr = (address or "").strip().lower()
-    coarse_lat = round(lat, 3)
-    coarse_lng = round(lng, 3)
-    return f"{query}_{norm_addr}_{coarse_lat}_{coarse_lng}"
+    return f"{query}_{norm_addr}"
 
-def make_eta_cache_key(address, lat, lng):
+def make_eta_cache_key(address):
     norm_addr = (address or "").strip().lower()
-    coarse_lat = round(lat, 3)
-    coarse_lng = round(lng, 3)
-    return f"eta_{norm_addr}_{coarse_lat}_{coarse_lng}"
+    return f"eta_{norm_addr}"
+
+# --------------------------------------------------------------------------------------
+#                               DB SAVE HELPER
+# --------------------------------------------------------------------------------------
+def save_products(products):
+    """Save raw scraper products into SQLite."""
+    conn = sqlite3.connect(DB_NAME)
+    cur = conn.cursor()
+    for p in products:
+        try:
+            cur.execute("""
+                INSERT INTO products (name, quantity, platform, price, product_url, image_url, in_stock)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                p.get("name"),
+                p.get("quantity"),
+                p.get("platform"),
+                p.get("price"),
+                p.get("product_url"),
+                p.get("image_url"),
+                int(p.get("in_stock", True))
+            ))
+        except Exception as e:
+            print("⚠️ DB insert error:", e, p)
+    conn.commit()
+    conn.close()
 
 # --------------------------------------------------------------------------------------
 #                                 /eta
@@ -43,14 +68,9 @@ def make_eta_cache_key(address, lat, lng):
 @app.route('/eta', methods=['POST'])
 def eta():
     data = request.get_json() or {}
-    lat = data.get('latitude')
-    lng = data.get('longitude')
-    address = (data.get('address') or "").strip() or "Pune, Maharashtra"
+    address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
 
-    latitude = float(lat) if lat is not None else 18.5026514
-    longitude = float(lng) if lng is not None else 73.807312
-
-    eta_key = make_eta_cache_key(address, latitude, longitude)
+    eta_key = make_eta_cache_key(address)
 
     if eta_key in eta_cache:
         ts, result = eta_cache[eta_key]
@@ -59,7 +79,7 @@ def eta():
 
     out = {"blinkit": "N/A", "zepto": "N/A", "instamart": "N/A"}
     with ThreadPoolExecutor(max_workers=3) as ex:
-        fut_b = ex.submit(get_blinkit_eta, latitude, longitude)
+        fut_b = ex.submit(get_blinkit_eta, address)
         fut_z = ex.submit(get_zepto_eta, address)
 
         try:
@@ -81,19 +101,15 @@ def eta():
 def search():
     data = request.get_json()
     query = (data.get('query') or "").strip().lower()
-    lat = data.get('latitude')
-    lng = data.get('longitude')
     address = (data.get('address') or "").strip()
 
-    print(f"📦 Received: query={query}, lat={lat}, lng={lng}")
+    print(f"📦 Received: query={query}")
     if not query:
         return jsonify({"error": "Missing query"}), 400
 
-    latitude = float(lat) if lat else 18.5026501
-    longitude = float(lng) if lng else 73.8073136
     address = address if address else "Kothrud, Pune"
 
-    cache_key = make_cache_key(query, address, latitude, longitude)
+    cache_key = make_cache_key(query, address)
 
     if cache_key in cache:
         timestamp, cached_result = cache[cache_key]
@@ -104,7 +120,7 @@ def search():
             print(f"⌛ Cache expired for '{cache_key}', re-scraping...")
             del cache[cache_key]
 
-    print(f"🔄 Scraping fresh data for '{query}' at {address or (latitude, longitude)}")
+    print(f"🔄 Scraping fresh data for '{query}' at {address}")
 
     results = []
     with ThreadPoolExecutor(max_workers=2) as ex:
@@ -127,6 +143,9 @@ def search():
 
     if not results:
         print("⚠️ No results scraped from either platform")
+
+    # 💾 Save raw results into SQLite
+    save_products(results)
 
     # 🔍 Debug print before merging
     print("\n🔍 DEBUG: Raw scraper output")

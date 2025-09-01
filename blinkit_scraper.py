@@ -83,7 +83,6 @@ def run_scraper(search_query: str):
                     "quantity": quantity,
                     "image_url": image_url,
                     "product_url": product_url,
-                    "delivery_time": "N/A",  # ETA handled separately
                     "in_stock": True,
                 })
             except Exception as e:
