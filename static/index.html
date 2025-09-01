@@ -10,10 +10,10 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA&libraries=places"></script>
 </head>
 
-<body class="bg-white min-h-screen flex flex-col items-center justify-center">
+<body class="bg-white min-h-screen flex flex-col items-center">
 
   <!-- App Logo / Title -->
-  <div class="mb-8">
+  <div class="mt-8 mb-6">
     <h1 class="text-4xl font-bold text-gray-800 tracking-tight">🛒 QuickKart</h1>
   </div>
 
@@ -29,14 +29,14 @@
   </div>
 
   <!-- Location Status Display -->
-  <div class="text-center mt-4">
+  <div class="text-center mt-3">
     <span id="user-location" class="inline-block text-gray-600 text-sm italic bg-gray-100 rounded-full px-3 py-1">
       📍 Detecting location...
     </span>
   </div>
 
   <!-- Grocery Platform Logos -->
-  <div class="flex justify-center items-center gap-8 mt-6">
+  <div class="flex justify-center items-center gap-8 mt-5">
     <img src="static/assets/blinkit.png" alt="Blinkit" class="h-8" />
     <img src="static/assets/zepto.png" alt="Zepto" class="h-10" />
   </div>
@@ -63,55 +63,41 @@
       class="px-3 py-1 rounded-full border text-sm">Zepto</button>
   </div>
 
-  <!-- QuickKart Loader -->
+  <!-- Loader -->
   <div id="loading" class="w-full max-w-2xl px-6 mt-2 hidden">
     <div class="flex items-center justify-center gap-6">
-      <!-- Source logo -->
-      <img id="sourceLogo" src="blinkit.png" alt="Blinkit logo" class="h-8 w-auto" />
-
-      <!-- Dots -->
+      <img id="sourceLogo" src="static/assets/blinkit.png" alt="Blinkit logo" class="h-8 w-auto" />
       <div class="flex gap-2">
         <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
         <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
       </div>
-
-      <!-- QuickKart -->
       <span class="font-bold text-gray-900 text-lg">QuickKart</span>
     </div>
-
-    <!-- Progress line -->
     <div class="w-full h-1 bg-gray-200 rounded-full mt-4 relative overflow-hidden">
       <div class="absolute h-full w-1/3 bg-teal-500 animate-[slide_1.6s_ease-in-out_infinite]"></div>
     </div>
   </div>
 
   <style>
-    @keyframes slide {
-      0%   { transform: translateX(-40%) scaleX(.8); }
-      50%  { transform: translateX(120%) scaleX(1); }
-      100% { transform: translateX(280%) scaleX(.8); }
-    }
-    @keyframes dotflow {
-      0%, 100% { opacity: .3; }
-      50%      { opacity: 1; }
-    }
-    .dot { width: 8px; height: 8px; border-radius: 9999px; background: #94a3b8; }
-    .dot:nth-child(1) { animation: dotflow 1s infinite; animation-delay: 0s; }
-    .dot:nth-child(2) { animation: dotflow 1s infinite; animation-delay: .1s; }
-    .dot:nth-child(3) { animation: dotflow 1s infinite; animation-delay: .2s; }
-    .dot:nth-child(4) { animation: dotflow 1s infinite; animation-delay: .3s; }
-    .dot:nth-child(5) { animation: dotflow 1s infinite; animation-delay: .4s; }
-    .dot:nth-child(6) { animation: dotflow 1s infinite; animation-delay: .5s; }
-    .dot:nth-child(7) { animation: dotflow 1s infinite; animation-delay: .6s; }
-    .dot:nth-child(8) { animation: dotflow 1s infinite; animation-delay: .7s; }
+    @keyframes slide { 0%{transform:translateX(-40%) scaleX(.8);} 50%{transform:translateX(120%) scaleX(1);} 100%{transform:translateX(280%) scaleX(.8);} }
+    @keyframes dotflow { 0%,100%{opacity:.3;} 50%{opacity:1;} }
+    .dot { width:8px; height:8px; border-radius:9999px; background:#94a3b8; }
+    .dot:nth-child(1){animation:dotflow 1s infinite;animation-delay:0s;}
+    .dot:nth-child(2){animation:dotflow 1s infinite;animation-delay:.1s;}
+    .dot:nth-child(3){animation:dotflow 1s infinite;animation-delay:.2s;}
+    .dot:nth-child(4){animation:dotflow 1s infinite;animation-delay:.3s;}
+    .dot:nth-child(5){animation:dotflow 1s infinite;animation-delay:.4s;}
+    .dot:nth-child(6){animation:dotflow 1s infinite;animation-delay:.5s;}
+    .dot:nth-child(7){animation:dotflow 1s infinite;animation-delay:.6s;}
+    .dot:nth-child(8){animation:dotflow 1s infinite;animation-delay:.7s;}
   </style>
 
-  <!-- Container for Rendered Product Cards -->
-  <div id="results" class="w-full max-w-4xl mt-6 px-6 grid grid-cols-1 gap-4 mb-10"></div>
+  <!-- Results -->
+  <div id="results" class="w-full max-w-7xl mt-6 px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"></div>
 
   <script>
     let locationData = { latitude: 18.5204, longitude: 73.8567, address: '' };
-    let _lastResults = [];   // last search results for filtering
+    let _lastResults = [];
     let _activePlatform = 'all';
 
     function escapeHtml(s) {
@@ -121,76 +107,17 @@
     }
 
     const PLATFORM_META = {
-      blinkit:   { name: "Blinkit",   logo: "static/assets/blinkit.png"   },
-      zepto:     { name: "Zepto",     logo: "static/assets/zepto.png"     }
+      blinkit: { name: "Blinkit", logo: "static/assets/blinkit.png" },
+      zepto:   { name: "Zepto",   logo: "static/assets/zepto.png" }
     };
 
     function platformBadge(platform) {
       const key = (platform || "").toLowerCase();
       const meta = PLATFORM_META[key] || { name: platform || "Unknown", logo: "" };
-      const img = meta.logo ? `<img src="${meta.logo}" alt="${escapeHtml(meta.name)}" class="h-4 w-4 inline-block mr-1 align-middle">` : "";
-      return `<span class="inline-flex items-center rounded-full border px-2 py-0.5 text-xs">
-        ${img}<span class="align-middle">${escapeHtml(meta.name)}</span>
+      const img = meta.logo ? `<img src="${meta.logo}" alt="${escapeHtml(meta.name)}" class="h-4 w-4 inline-block mr-1">` : "";
+      return `<span class="inline-flex items-center px-2 py-0.5 text-xs rounded-full bg-gray-100 border">
+        ${img}<span>${escapeHtml(meta.name)}</span>
       </span>`;
-    }
-
-    // Initialize location & fetch ETAs
-    function initLocation() {
-      const locationDisplay = document.getElementById("user-location");
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            locationData.latitude = position.coords.latitude;
-            locationData.longitude = position.coords.longitude;
-
-            const geocoder = new google.maps.Geocoder();
-            const latlng = { lat: locationData.latitude, lng: locationData.longitude };
-            geocoder.geocode({ location: latlng }, (results, status) => {
-              if (status === "OK" && results && results[0]) {
-                locationData.address = results[0].formatted_address;
-                locationDisplay.textContent = "📍 " + locationData.address;
-              } else {
-                locationDisplay.textContent = "📍 Location detected";
-              }
-              fetchETAs();
-            });
-          },
-          () => {
-            locationDisplay.textContent = "📍 Unable to get location. Using default (Pune)";
-            fetchETAs();
-          },
-          { enableHighAccuracy: true, timeout: 5000 }
-        );
-      } else {
-        locationDisplay.textContent = "📍 Geolocation not supported.";
-        fetchETAs();
-      }
-    }
-
-    async function fetchETAs() {
-      const strip = document.getElementById("eta-strip");
-      strip.classList.remove("hidden");
-      document.getElementById("eta-blinkit").textContent = "…";
-      document.getElementById("eta-zepto").textContent = "…";
-
-      try {
-        const res = await fetch('/eta', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            latitude:  locationData.latitude,
-            longitude: locationData.longitude,
-            address:   locationData.address
-          })
-        });
-        const data = await res.json();
-        document.getElementById("eta-blinkit").textContent   = (data && data.blinkit)   ? data.blinkit   : "N/A";
-        document.getElementById("eta-zepto").textContent     = (data && data.zepto)     ? data.zepto     : "N/A";
-      } catch (e) {
-        console.warn("ETA fetch failed:", e);
-        document.getElementById("eta-blinkit").textContent = "N/A";
-        document.getElementById("eta-zepto").textContent = "N/A";
-      }
     }
 
     function renderResults(items = []) {
@@ -202,47 +129,61 @@
         return;
       }
 
-      const priceToNumber = p => {
-        const n = Number((p || "").replace(/[^\d.]/g, ""));
-        return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
-      };
-
-      items.sort((a, b) => priceToNumber(a.price) - priceToNumber(b.price));
-
       container.innerHTML = items.map(product => {
-        const platform = (product.platform || "").toLowerCase();
-        const badge = platformBadge(platform);
-
+        // product image
         const img = product.image_url
-          ? `<img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name || '')}"
-                 class="w-24 h-24 object-contain rounded bg-gray-50"
-                 onerror="this.style.display='none';" />`
-          : `<div class="w-24 h-24 rounded bg-gray-100"></div>`;
+          ? `<img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.name)}"
+                   class="h-28 w-auto object-contain mx-auto"
+                   onerror="this.style.display='none';" />`
+          : `<div class="h-28 w-28 bg-gray-100 rounded mx-auto"></div>`;
 
         const name = escapeHtml(product.name || "Unnamed");
         const qty = escapeHtml(product.quantity || "N/A");
-        const price = escapeHtml(product.price || "N/A");
-        const eta = escapeHtml(product.delivery_time || "N/A");
-        const href = escapeHtml(product.product_url || "#");
-        const platformName = PLATFORM_META[platform]?.name || (product.platform || "Source");
+
+        // platform rows
+        const platformRows = (product.platforms || []).map(p => {
+          const key = (p.platform || "").toLowerCase();
+          const meta = PLATFORM_META[key] || {};
+          const logo = meta.logo ? `<img src="${meta.logo}" class="h-4 w-4 mr-1" />` : "";
+          const platformName = meta.name || escapeHtml(p.platform || "Source");
+
+          const price = escapeHtml(p.price || "N/A");
+          const eta = escapeHtml(p.delivery_time || "N/A");
+          const stock = p.in_stock ? "" : `<span class="ml-2 text-xs text-red-500">Out of Stock</span>`;
+
+          return `
+            <a href="${escapeHtml(p.product_url || "#")}" target="_blank" rel="noopener"
+               class="flex justify-between items-center bg-gray-50 rounded-lg px-3 py-2 border hover:shadow-sm transition">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-xs border">
+                  ${logo}${platformName}
+                </span>
+                ${stock}
+              </div>
+              <div class="text-right">
+                <div class="text-green-600 font-bold">${price}</div>
+                <div class="text-xs text-gray-500">${eta}</div>
+              </div>
+            </a>
+          `;
+        }).join("");
 
         return `
-          <a href="${href}" target="_blank" rel="noopener"
-             class="block bg-white rounded-2xl border p-4 hover:shadow transition">
-            <div class="flex gap-4 items-start">
+          <div class="bg-white rounded-2xl border p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition">
+            <!-- Image -->
+            <div class="flex justify-center items-center">
               ${img}
-              <div class="flex-1">
-                <div class="flex items-center justify-between gap-2">
-                  <h2 class="text-base font-semibold line-clamp-2">${name}</h2>
-                  ${badge}
-                </div>
-                <p class="text-sm text-gray-600">${qty}</p>
-                <p class="mt-1 text-green-600 font-bold">${price}</p>
-                <p class="text-xs text-gray-500">Delivery: ${eta}</p>
-                <span class="text-blue-600 underline text-sm mt-1 inline-block">View on ${escapeHtml(platformName)}</span>
-              </div>
             </div>
-          </a>
+
+            <!-- Name + Qty -->
+            <div>
+              <h2 class="text-base font-semibold leading-snug">${name}</h2>
+              <p class="text-sm text-gray-500">${qty}</p>
+            </div>
+
+            <!-- Platforms -->
+            <div class="space-y-2">${platformRows}</div>
+          </div>
         `;
       }).join("");
     }
@@ -287,40 +228,80 @@
       if (platform === "all") {
         renderResults(_lastResults);
       } else {
-        renderResults(_lastResults.filter(x => (x.platform || "").toLowerCase() === platform));
+        renderResults(_lastResults.filter(prod =>
+          (prod.platforms || []).some(p => (p.platform || "").toLowerCase() === platform)
+        ));
+      }
+    }
+
+    function initLocation() {
+      const locationDisplay = document.getElementById("user-location");
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            locationData.latitude = pos.coords.latitude;
+            locationData.longitude = pos.coords.longitude;
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ location: { lat: pos.coords.latitude, lng: pos.coords.longitude } },
+              (results, status) => {
+                if (status === "OK" && results && results[0]) {
+                  locationData.address = results[0].formatted_address;
+                  locationDisplay.textContent = "📍 " + locationData.address;
+                } else {
+                  locationDisplay.textContent = "📍 Location detected";
+                }
+                fetchETAs();
+              });
+          },
+          () => {
+            locationDisplay.textContent = "📍 Unable to get location. Using default (Pune)";
+            fetchETAs();
+          },
+          { enableHighAccuracy: true, timeout: 5000 }
+        );
+      } else {
+        locationDisplay.textContent = "📍 Geolocation not supported.";
+        fetchETAs();
+      }
+    }
+
+    async function fetchETAs() {
+      const strip = document.getElementById("eta-strip");
+      strip.classList.remove("hidden");
+      document.getElementById("eta-blinkit").textContent = "…";
+      document.getElementById("eta-zepto").textContent = "…";
+      try {
+        const res = await fetch('/eta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(locationData)
+        });
+        const data = await res.json();
+        document.getElementById("eta-blinkit").textContent = data?.blinkit || "N/A";
+        document.getElementById("eta-zepto").textContent = data?.zepto || "N/A";
+      } catch {
+        document.getElementById("eta-blinkit").textContent = "N/A";
+        document.getElementById("eta-zepto").textContent = "N/A";
       }
     }
 
     window.onload = initLocation;
 
-    // Loader logo cycle (Blinkit & Zepto only)
+    // Loader logo cycle
     const sources = [
-      { name:'Blinkit', logo:'/static/assets/blinkit.png' },
-      { name:'Zepto',   logo:'/static/assets/zepto.png'   }
+      { name:'Blinkit', logo:'static/assets/blinkit.png' },
+      { name:'Zepto',   logo:'static/assets/zepto.png'   }
     ];
-
     let idx = 0;
     const logo = document.getElementById('sourceLogo');
-
-    function cycleSource(){
+    setInterval(() => {
       const s = sources[idx % sources.length];
-      logo.src = s.logo;
-      logo.alt = s.name + " logo";
+      logo.src = s.logo; logo.alt = s.name + " logo";
       idx++;
-    }
-
-    setInterval(cycleSource, 1600);
-    cycleSource();
+    }, 1600);
   </script>
-
 </body>
 </html>
-
-
-
-
-
-
 
 
 AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA
