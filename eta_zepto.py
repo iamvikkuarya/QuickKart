@@ -40,6 +40,11 @@ def get_zepto_eta(address: str, headed: bool = False) -> str:
         )
         page = context.new_page()
         eta = "N/A"
+
+        context.route("**/*", lambda route: (
+            route.abort() if route.request.resource_type in ["image", "font"] else route.continue_()
+        ))
+
         try:
             page.goto("https://www.zeptonow.com/", timeout=40000)
 
@@ -50,7 +55,7 @@ def get_zepto_eta(address: str, headed: bool = False) -> str:
             page.click('button[data-testid="location-confirm-btn"]', timeout=15000)
 
             # Wait for hydration + slight scroll
-            page.wait_for_timeout(500)
+            page.wait_for_timeout(800)
             page.evaluate("window.scrollBy(0,300)")
 
             raw = ""
@@ -72,4 +77,4 @@ def get_zepto_eta(address: str, headed: bool = False) -> str:
 
 if __name__ == "__main__":
     # Example: must pass explicit address
-    print("Zepto ETA:", get_zepto_eta("Azad Nagar, Kothrud, Pune"))
+    print("Zepto ETA:", get_zepto_eta("Bavdhan, Pune"))

@@ -17,7 +17,7 @@ def normalize_eta(raw: str) -> str:
 def get_blinkit_eta(address: str, headed: bool = False) -> str:
     with sync_playwright() as p:
         browser = p.chromium.launch(
-            headless=False,
+            headless=True,
             args=["--no-sandbox", "--disable-dev-shm-usage"]
         )
         context = browser.new_context(
@@ -30,6 +30,10 @@ def get_blinkit_eta(address: str, headed: bool = False) -> str:
         )
         page = context.new_page()
         eta = "N/A"
+
+        context.route("**/*", lambda route: (
+        route.abort() if route.request.resource_type in ["image", "font"] else route.continue_()
+        ))
 
         try:
             page.goto("https://blinkit.com/", timeout=40000)
@@ -49,7 +53,7 @@ def get_blinkit_eta(address: str, headed: bool = False) -> str:
             suggestion.click(timeout=5000)
 
             # Step 3: small wait for page to refresh ETA
-            page.wait_for_timeout(1500)
+            page.wait_for_timeout(2000)
 
             # Step 4: poll for ETA until available (max ~5s)
             raw = ""
@@ -78,4 +82,4 @@ def get_blinkit_eta(address: str, headed: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    print("Blinkit ETA:", get_blinkit_eta("Koregaon Park, Pune"))
+    print("Blinkit ETA:", get_blinkit_eta("Azad Nagar, Kothrud"))
