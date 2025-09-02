@@ -1,57 +1,73 @@
 # eta_dmart.py
-from playwright.sync_api import sync_playwright
+import requests
 
-def get_dmart_eta(pincode: str) -> str:
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)  # keep False for debugging
-        context = browser.new_context()
-        page = context.new_page()
+BASE_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/117.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Origin": "https://www.dmart.in",
+    "Referer": "https://www.dmart.in/",
+}
 
-        context.route("**/*", lambda route: (
-            route.abort() if route.request.resource_type in ["image", "font", "stylesheet"] else route.continue_()
-        ))
+def get_unique_id(search_text: str) -> str:
+    """Fetch uniqueId for a given pincode/address."""
+    url = "https://digital.dmart.in/api/v2/pincodes/suggestions"
+    resp = requests.post(url, json={"searchText": search_text}, headers=BASE_HEADERS, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    results = data.get("searchResult", [])
+    return results[0]["uniqueId"] if results else ""
 
-        # 1. Open homepage
-        page.goto("https://www.dmart.in/", timeout=60000)
+def get_store_id(pincode: str, unique_id: str) -> str:
+    """Fetch storeId using uniqueId + pincode."""
+    url = "https://digital.dmart.in/api/v2/pincodes/details"
+    payload = {
+        "uniqueId": unique_id,
+        "apiMode": "GA",
+        "pincode": pincode,
+        "currentLat": "",
+        "currentLng": "",
+    }
+    resp = requests.post(url, json=payload, headers=BASE_HEADERS, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    return str(data.get("storePincodeDetails", {}).get("storeId", ""))
 
-        # 2. Fill the pincode input
-        page.wait_for_selector("#pincodeInput", timeout=15000)
-        page.fill("#pincodeInput", pincode)
+def get_dmart_eta(pincode_or_address: str) -> str:
+    """Fetch ETA/delivery slot for Dmart using pincode/address."""
+    try:
+        unique_id = get_unique_id(pincode_or_address)
+        if not unique_id:
+            return "N/A"
 
-        # 3. Wait for suggestions and click first
-        first_suggestion = (
-            "body > div.MuiDialog-root.pincode-widget_container__9Ru5k "
-            "> div.MuiDialog-container > div > div > div "
-            "> div.pincode-widget_pincode-body__g684i ul > li:nth-child(1) > button"
-        )
-        page.wait_for_selector(first_suggestion, timeout=8000)
-        page.eval_on_selector(first_suggestion, "el => el.click()")
+        store_id = get_store_id(pincode_or_address, unique_id)
+        if not store_id:
+            return "N/A"
 
-        # 4. Confirm location
-        page.wait_for_selector("button:has-text('CONFIRM LOCATION')", timeout=10000)
-        page.click("button:has-text('CONFIRM LOCATION')", force=True)
+        url = f"https://digital.dmart.in/api/v2/pincodes/earliestslot/{pincode_or_address}?storeId={store_id}"
+        resp = requests.get(url, headers=BASE_HEADERS, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
 
-        # 5. Wait for page to reload with header ETA
-        page.wait_for_timeout(1000)
+        slots = data.get("slots", [])
+        if not slots:
+            return "N/A"
 
-        # 6. Grab ETA from header
-        eta_selector = (
-            "#__next > div.layout_container__GDOMj > header > div > "
-            "div.header_header-container__HCWdL > div.header_logo-container__vCOK2 > div > "
-            "div.MuiGrid-root.MuiGrid-item.MuiGrid-grid-xs-12.MuiGrid-grid-md-5.header_sepBorder__eD530.mui-style-1r482s6 " #this one works
-            "> div:nth-child(2) > div:nth-child(2)"
-        )
+        # pick first available slot
+        if "timeSlot" in slots[0]:
+            return slots[0]["timeSlot"]
 
-        eta_text = ""
-        try:
-            page.wait_for_selector(eta_selector, timeout=2000)
-            eta_text = page.text_content(eta_selector).strip()
-        except Exception as e:
-            print(f"⚠️ ETA not found: {e}")
-            eta_text = "N/A"
+        if slots[0].get("type") == "PUP" and slots[0].get("PUPData"):
+            return slots[0]["PUPData"][0].get("timeSlot", "N/A")
 
-        browser.close()
-        return eta_text
+        return "N/A"
+    except Exception as e:
+        print("⚠️ ETA fetch failed:", e)
+        return "N/A"
 
 if __name__ == "__main__":
-    print("ETA:", get_dmart_eta("Azad Nagar Kothrud"))
+    # Works with pincode or address string
+    print("ETA:", get_dmart_eta("411038"))

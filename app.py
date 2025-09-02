@@ -6,10 +6,14 @@ from flask import Flask, request, jsonify
 # --- Product scrapers ---
 from blinkit_scraper import run_scraper
 from zepto_scraper import run_zepto_scraper
+from dmart_scraper import run_dmart_scraper
 
 # --- ETA helpers ---
 from eta_blinkit import get_blinkit_eta
 from eta_zepto import get_zepto_eta
+from eta_dmart import get_dmart_eta
+
+from dmart_location import get_store_details
 
 # --- Merge logic ---
 from utils import merge_products
@@ -28,13 +32,16 @@ eta_cache = {}
 CACHE_TTL = 300
 ETA_CACHE_TTL = 300
 
-def make_cache_key(query, address):
+def make_cache_key(query, address, pincode):
     norm_addr = (address or "").strip().lower()
-    return f"{query}_{norm_addr}"
+    norm_pin = (pincode or "").strip()
+    return f"{query}_{norm_addr}_{norm_pin}"
 
-def make_eta_cache_key(address):
+def make_eta_cache_key(address, pincode):
     norm_addr = (address or "").strip().lower()
-    return f"eta_{norm_addr}"
+    norm_pin = (pincode or "").strip()
+    return f"eta_{norm_addr}_{norm_pin}"
+
 
 # --------------------------------------------------------------------------------------
 #                               DB SAVE HELPER
@@ -69,18 +76,20 @@ def save_products(products):
 def eta():
     data = request.get_json() or {}
     address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
+    pincode = (data.get('pincode') or "").strip() or "411038"
 
-    eta_key = make_eta_cache_key(address)
+    eta_key = make_eta_cache_key(address, pincode)
 
     if eta_key in eta_cache:
         ts, result = eta_cache[eta_key]
         if time.time() - ts < ETA_CACHE_TTL:
             return jsonify(result)
 
-    out = {"blinkit": "N/A", "zepto": "N/A", "instamart": "N/A"}
+    out = {"blinkit": "N/A", "zepto": "N/A", "dmart": "N/A"}
     with ThreadPoolExecutor(max_workers=3) as ex:
         fut_b = ex.submit(get_blinkit_eta, address)
         fut_z = ex.submit(get_zepto_eta, address)
+        fut_d = ex.submit(get_dmart_eta, pincode)  # 🔑 use pincode for Dmart
 
         try:
             out["blinkit"] = fut_b.result(timeout=25) or "N/A"
@@ -90,6 +99,10 @@ def eta():
             out["zepto"] = fut_z.result(timeout=25) or "N/A"
         except Exception as e:
             print("ETA zepto error:", e)
+        try:
+            out["dmart"] = fut_d.result(timeout=25) or "N/A"
+        except Exception as e:
+            print("ETA dmart error:", e)
 
     eta_cache[eta_key] = (time.time(), out)
     return jsonify(out)
@@ -102,6 +115,7 @@ def search():
     data = request.get_json()
     query = (data.get('query') or "").strip().lower()
     address = (data.get('address') or "").strip()
+    pincode = (data.get('pincode') or "").strip() or "411038"
 
     print(f"📦 Received: query={query}")
     if not query:
@@ -109,7 +123,7 @@ def search():
 
     address = address if address else "Kothrud, Pune"
 
-    cache_key = make_cache_key(query, address)
+    cache_key = make_cache_key(query, address, pincode)
 
     if cache_key in cache:
         timestamp, cached_result = cache[cache_key]
@@ -120,12 +134,14 @@ def search():
             print(f"⌛ Cache expired for '{cache_key}', re-scraping...")
             del cache[cache_key]
 
-    print(f"🔄 Scraping fresh data for '{query}' at {address}")
+    print(f"🔄 Scraping fresh data for '{query}' at {address} ({pincode})")
 
     results = []
-    with ThreadPoolExecutor(max_workers=2) as ex:
+    with ThreadPoolExecutor(max_workers=3) as ex:
         fut_blinkit = ex.submit(run_scraper, query)
         fut_zepto = ex.submit(run_zepto_scraper, query)
+        unique_id, store_id = get_store_details(pincode)
+        fut_dmart = ex.submit(run_dmart_scraper, query, store_id) if store_id else None  # 🔑 use pincode for Dmart
 
         try:
             b = fut_blinkit.result() or []
@@ -141,8 +157,16 @@ def search():
         except Exception as e:
             print(f"⚠️ Zepto scraper error: {e}")
 
+        if fut_dmart:
+            try:
+                d = fut_dmart.result() or []
+                results += d
+                print(f"🟡 Dmart returned {len(d)} items")
+            except Exception as e:
+                print(f"⚠️ Dmart scraper error: {e}")
+
     if not results:
-        print("⚠️ No results scraped from either platform")
+        print("⚠️ No results scraped from any platform")
 
     # 💾 Save raw results into SQLite
     save_products(results)

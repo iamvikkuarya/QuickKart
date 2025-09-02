@@ -39,6 +39,7 @@
   <div class="flex justify-center items-center gap-8 mt-5">
     <img src="static/assets/blinkit.png" alt="Blinkit" class="h-8" />
     <img src="static/assets/zepto.png" alt="Zepto" class="h-10" />
+    <img src="static/assets/dmart.png" alt="Dmart" class="h-10" />
   </div>
 
   <!-- ✅ ETA strip -->
@@ -49,6 +50,9 @@
       </span>
       <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700">
         Zepto: <b id="eta-zepto">…</b>
+      </span>
+      <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700">
+        Dmart: <b id="eta-dmart">…</b>
       </span>
     </div>
   </div>
@@ -61,6 +65,8 @@
       class="px-3 py-1 rounded-full border text-sm">Blinkit</button>
     <button onclick="filterPlatform('zepto')" id="btn-zepto"
       class="px-3 py-1 rounded-full border text-sm">Zepto</button>
+    <button onclick="filterPlatform('dmart')" id="btn-dmart"
+      class="px-3 py-1 rounded-full border text-sm">Dmart</button> 
   </div>
 
   <!-- Loader -->
@@ -96,7 +102,7 @@
   <div id="results" class="w-full max-w-7xl mt-6 px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"></div>
 
   <script>
-    let locationData = { latitude: 18.5204, longitude: 73.8567, address: '' };
+    let locationData = { latitude: 18.5204, longitude: 73.8567, address: '', pincode: '' };
     let _lastResults = [];
     let _activePlatform = 'all';
 
@@ -108,7 +114,8 @@
 
     const PLATFORM_META = {
       blinkit: { name: "Blinkit", logo: "static/assets/blinkit.png" },
-      zepto:   { name: "Zepto",   logo: "static/assets/zepto.png" }
+      zepto:   { name: "Zepto",   logo: "static/assets/zepto.png" },
+      dmart:   { name: "Dmart",   logo: "static/assets/dmart.png" } 
     };
 
     function platformBadge(platform) {
@@ -154,6 +161,9 @@
           }
           if ((p.platform || "").toLowerCase() === "zepto") {
             eta = document.getElementById("eta-zepto")?.textContent || "N/A";
+          }
+          if ((p.platform || "").toLowerCase() === "dmart") {
+            eta = document.getElementById("eta-dmart")?.textContent || "N/A";
           }
           const stock = p.in_stock ? "" : `<span class="ml-2 text-xs text-red-500">Out of Stock</span>`;
 
@@ -209,7 +219,8 @@
             query,
             latitude: locationData.latitude,
             longitude: locationData.longitude,
-            address: locationData.address
+            address: locationData.address,
+            pincode: locationData.pincode
           })
         });
         const data = await response.json();
@@ -253,6 +264,13 @@
                 if (status === "OK" && results && results[0]) {
                   locationData.address = results[0].formatted_address;
                   locationDisplay.textContent = "📍 " + locationData.address;
+
+                  // 🔑 Extract pincode from address_components
+                const comps = results[0].address_components || [];
+                const pinComp = comps.find(c => c.types.includes("postal_code"));
+                if (pinComp) {
+                  locationData.pincode = pinComp.long_name;
+                }
                 } else {
                   locationDisplay.textContent = "📍 Location detected";
                 }
@@ -261,12 +279,14 @@
           },
           () => {
             locationDisplay.textContent = "📍 Unable to get location. Using default (Pune)";
+            locationData.pincode = "411038";
             fetchETAs();
           },
           { enableHighAccuracy: true, timeout: 5000 }
         );
       } else {
         locationDisplay.textContent = "📍 Geolocation not supported.";
+        locationData.pincode = "411038";
         fetchETAs();
       }
     }
@@ -276,6 +296,7 @@
       strip.classList.remove("hidden");
       document.getElementById("eta-blinkit").textContent = "…";
       document.getElementById("eta-zepto").textContent = "…";
+      document.getElementById("eta-dmart").textContent = "…";
       try {
         const res = await fetch('/eta', {
           method: 'POST',
@@ -285,9 +306,11 @@
         const data = await res.json();
         document.getElementById("eta-blinkit").textContent = data?.blinkit || "N/A";
         document.getElementById("eta-zepto").textContent = data?.zepto || "N/A";
+        document.getElementById("eta-dmart").textContent = data?.dmart || "N/A";
       } catch {
         document.getElementById("eta-blinkit").textContent = "N/A";
         document.getElementById("eta-zepto").textContent = "N/A";
+        document.getElementById("eta-dmart").textContent = "N/A";
       }
     }
 
@@ -296,7 +319,8 @@
     // Loader logo cycle
     const sources = [
       { name:'Blinkit', logo:'static/assets/blinkit.png' },
-      { name:'Zepto',   logo:'static/assets/zepto.png'   }
+      { name:'Zepto',   logo:'static/assets/zepto.png'   },
+      { name:'Dmart',   logo:'static/assets/dmart.png'   }
     ];
     let idx = 0;
     const logo = document.getElementById('sourceLogo');
