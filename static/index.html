@@ -262,7 +262,10 @@
             geocoder.geocode({ location: { lat: pos.coords.latitude, lng: pos.coords.longitude } },
               (results, status) => {
                 if (status === "OK" && results && results[0]) {
-                  locationData.address = results[0].formatted_address;
+
+                  // ✅ Clean the address before saving
+                  const formatted = results[0].formatted_address;
+                  locationData.address = stripPlusCodeFromAddress(formatted);
                   locationDisplay.textContent = "📍 " + locationData.address;
 
                   // 🔑 Extract pincode from address_components
@@ -289,6 +292,18 @@
         locationData.pincode = "411038";
         fetchETAs();
       }
+    }
+
+    // ➕ Add this helper function anywhere above initLocation
+    function stripPlusCodeFromAddress(address) {
+      if (!address || typeof address !== "string") return address || "";
+      const parts = address.split(",").map(p => p.trim());
+      const first = parts[0] || "";
+      const looksLikePlusCode = first.includes("+") && first.length <= 12;
+      if (looksLikePlusCode) {
+        parts.shift();
+      }
+      return parts.join(", ");
     }
 
     async function fetchETAs() {
