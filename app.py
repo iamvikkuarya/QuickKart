@@ -1,7 +1,10 @@
 import time
 import sqlite3
+import os
 from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, request, jsonify
+from dotenv import load_dotenv
+load_dotenv()
 
 # --- Product scrapers ---
 from blinkit_scraper import run_scraper
@@ -42,7 +45,11 @@ def make_eta_cache_key(address, pincode):
     norm_pin = (pincode or "").strip()
     return f"eta_{norm_addr}_{norm_pin}"
 
-
+@app.route("/config")
+def get_config():
+    return jsonify({
+        "maps_api_key": os.getenv("GOOGLE_MAPS_API_KEY")
+    })
 # --------------------------------------------------------------------------------------
 #                               DB SAVE HELPER
 # --------------------------------------------------------------------------------------

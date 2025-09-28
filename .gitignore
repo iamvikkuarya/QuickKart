@@ -5,7 +5,9 @@ __pycache__/
 
 # Local environment
 .venv/
-env/
+*.env
+*test.py
+*.gitignore/
 
 # Browser/user data
 blinkit_desktop_profile/

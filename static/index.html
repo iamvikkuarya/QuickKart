@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>QuickCompare</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Maps API (Places) -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA&libraries=places"></script>
+  <!-- Google Maps API (Places) - loaded dynamically -->
+  <script id="google-maps-script"></script>
 </head>
 
 <body class="bg-white min-h-screen flex flex-col items-center">
@@ -19,13 +20,9 @@
 
   <!-- Search Input Field -->
   <div class="w-full max-w-2xl px-6">
-    <input
-      id="search"
-      type="text"
-      placeholder="Search for products..."
+    <input id="search" type="text" placeholder="Search for products..."
       class="w-full px-5 py-3 border border-gray-300 rounded-full text-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-      onkeydown="if(event.key === 'Enter'){event.preventDefault(); searchProduct();}"
-    />
+      onkeydown="if(event.key === 'Enter'){event.preventDefault(); searchProduct();}" />
   </div>
 
   <!-- Location Status Display -->
@@ -66,7 +63,7 @@
     <button onclick="filterPlatform('zepto')" id="btn-zepto"
       class="px-3 py-1 rounded-full border text-sm">Zepto</button>
     <button onclick="filterPlatform('dmart')" id="btn-dmart"
-      class="px-3 py-1 rounded-full border text-sm">Dmart</button> 
+      class="px-3 py-1 rounded-full border text-sm">Dmart</button>
   </div>
 
   <!-- Loader -->
@@ -74,8 +71,14 @@
     <div class="flex items-center justify-center gap-6">
       <img id="sourceLogo" src="static/assets/blinkit.png" alt="Blinkit logo" class="h-8 w-auto" />
       <div class="flex gap-2">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
       </div>
       <span class="font-bold text-gray-900 text-lg">QuickKart</span>
     </div>
@@ -85,17 +88,78 @@
   </div>
 
   <style>
-    @keyframes slide { 0%{transform:translateX(-40%) scaleX(.8);} 50%{transform:translateX(120%) scaleX(1);} 100%{transform:translateX(280%) scaleX(.8);} }
-    @keyframes dotflow { 0%,100%{opacity:.3;} 50%{opacity:1;} }
-    .dot { width:8px; height:8px; border-radius:9999px; background:#94a3b8; }
-    .dot:nth-child(1){animation:dotflow 1s infinite;animation-delay:0s;}
-    .dot:nth-child(2){animation:dotflow 1s infinite;animation-delay:.1s;}
-    .dot:nth-child(3){animation:dotflow 1s infinite;animation-delay:.2s;}
-    .dot:nth-child(4){animation:dotflow 1s infinite;animation-delay:.3s;}
-    .dot:nth-child(5){animation:dotflow 1s infinite;animation-delay:.4s;}
-    .dot:nth-child(6){animation:dotflow 1s infinite;animation-delay:.5s;}
-    .dot:nth-child(7){animation:dotflow 1s infinite;animation-delay:.6s;}
-    .dot:nth-child(8){animation:dotflow 1s infinite;animation-delay:.7s;}
+    @keyframes slide {
+      0% {
+        transform: translateX(-40%) scaleX(.8);
+      }
+
+      50% {
+        transform: translateX(120%) scaleX(1);
+      }
+
+      100% {
+        transform: translateX(280%) scaleX(.8);
+      }
+    }
+
+    @keyframes dotflow {
+
+      0%,
+      100% {
+        opacity: .3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: #94a3b8;
+    }
+
+    .dot:nth-child(1) {
+      animation: dotflow 1s infinite;
+      animation-delay: 0s;
+    }
+
+    .dot:nth-child(2) {
+      animation: dotflow 1s infinite;
+      animation-delay: .1s;
+    }
+
+    .dot:nth-child(3) {
+      animation: dotflow 1s infinite;
+      animation-delay: .2s;
+    }
+
+    .dot:nth-child(4) {
+      animation: dotflow 1s infinite;
+      animation-delay: .3s;
+    }
+
+    .dot:nth-child(5) {
+      animation: dotflow 1s infinite;
+      animation-delay: .4s;
+    }
+
+    .dot:nth-child(6) {
+      animation: dotflow 1s infinite;
+      animation-delay: .5s;
+    }
+
+    .dot:nth-child(7) {
+      animation: dotflow 1s infinite;
+      animation-delay: .6s;
+    }
+
+    .dot:nth-child(8) {
+      animation: dotflow 1s infinite;
+      animation-delay: .7s;
+    }
   </style>
 
   <!-- Results -->
@@ -108,14 +172,14 @@
 
     function escapeHtml(s) {
       return (s || "").replace(/[&<>"']/g, m => (
-        {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]
       ));
     }
 
     const PLATFORM_META = {
       blinkit: { name: "Blinkit", logo: "static/assets/blinkit.png" },
-      zepto:   { name: "Zepto",   logo: "static/assets/zepto.png" },
-      dmart:   { name: "Dmart",   logo: "static/assets/dmart.png" } 
+      zepto: { name: "Zepto", logo: "static/assets/zepto.png" },
+      dmart: { name: "Dmart", logo: "static/assets/dmart.png" }
     };
 
     function platformBadge(platform) {
@@ -269,11 +333,11 @@
                   locationDisplay.textContent = "📍 " + locationData.address;
 
                   // 🔑 Extract pincode from address_components
-                const comps = results[0].address_components || [];
-                const pinComp = comps.find(c => c.types.includes("postal_code"));
-                if (pinComp) {
-                  locationData.pincode = pinComp.long_name;
-                }
+                  const comps = results[0].address_components || [];
+                  const pinComp = comps.find(c => c.types.includes("postal_code"));
+                  if (pinComp) {
+                    locationData.pincode = pinComp.long_name;
+                  }
                 } else {
                   locationDisplay.textContent = "📍 Location detected";
                 }
@@ -329,13 +393,26 @@
       }
     }
 
-    window.onload = initLocation;
+    async function loadGoogleMaps() {
+      try {
+        const response = await fetch('/config');
+        const config = await response.json();
+        const script = document.getElementById('google-maps-script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.maps_api_key}&libraries=places&callback=initLocation`;
+      } catch (error) {
+        console.error('Failed to load Google Maps API key:', error);
+        // Fallback to initialize location without maps
+        initLocation();
+      }
+    }
+
+    window.onload = loadGoogleMaps;
 
     // Loader logo cycle
     const sources = [
-      { name:'Blinkit', logo:'static/assets/blinkit.png' },
-      { name:'Zepto',   logo:'static/assets/zepto.png'   },
-      { name:'Dmart',   logo:'static/assets/dmart.png'   }
+      { name: 'Blinkit', logo: 'static/assets/blinkit.png' },
+      { name: 'Zepto', logo: 'static/assets/zepto.png' },
+      { name: 'Dmart', logo: 'static/assets/dmart.png' }
     ];
     let idx = 0;
     const logo = document.getElementById('sourceLogo');
@@ -346,7 +423,5 @@
     }, 1600);
   </script>
 </body>
+
 </html>
-
-
-AIzaSyCFTDmLrJ9q8N_Q4j6aqIb3X4Z4cTpEKMA
