@@ -1,6 +1,6 @@
 # QuickKart 🛒 — Grocery price comparison (Blinkit & Zepto)
 
-[![CI](https://img.shields.io/github/actions/workflow/status/iamvikkuarya/QuickKart/ci.yml?branch=main&label=ci)](https://github.com/iamvikkuarya/QuickKart/actions)
+[![CI](https://github.com/iamvikkuarya/QuickKart/actions/workflows/ci.yml/badge.svg)](https://github.com/iamvikkuarya/QuickKart/actions)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](#)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -38,7 +38,7 @@ QuickKart helps you instantly compare grocery items across Blinkit and Zepto by 
 - Flask backend with caching and SQLite persistence.  
 - Lightweight SPA frontend (Tailwind) with location detection.
 
----
+--- 
 
 ## Quick start
 
@@ -168,6 +168,13 @@ Please follow these steps:
 3. Open a PR with description and testing notes.
 
 See `CONTRIBUTING.md` for more.
+
+---
+
+## Screenshots & GIFs guidelines
+
+- Put images under `docs/images/` (or `assets/`) and reference them in README.
+- Keep GIFs short (3–6s) and compressed; prefer a short MP4 if file size matters.
 
 ---
 
