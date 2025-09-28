@@ -1,6 +1,6 @@
 # QuickKart 🛒 — Grocery price comparison (Blinkit & Zepto)
 
-[![CI](https://img.shields.io/github/actions/workflow/status/<iamvikkuarya>/<QuickKart>/ci.yml?branch=main&label=ci)](https://github.com/<iamvikkuarya>/<QuickKart>/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/iamvikkuarya/QuickKart/ci.yml?branch=main&label=ci)](https://github.com/iamvikkuarya/QuickKart/actions)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](#)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -44,8 +44,8 @@ QuickKart helps you instantly compare grocery items across Blinkit and Zepto by 
 
 ```bash
 # clone
-git clone https://github.com/<iamvikkuarya>/<QuickKart>.git
-cd <QuickKart>
+git clone https://github.com/iamvikkuarya/QuickKart.git
+cd QuickKart
 
 # python venv
 python -m venv .venv
