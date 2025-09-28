@@ -1,0 +1,5 @@
+Flask
+python-dotenv
+playwright
+requests
+pytest
