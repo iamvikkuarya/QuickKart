@@ -9,7 +9,7 @@ __pycache__/
 *test.py
 *.gitignore/
 *.vscode/
-*.product.db
+*product.db
 
 
 # Browser/user data
