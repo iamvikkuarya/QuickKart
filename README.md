@@ -171,13 +171,6 @@ See `CONTRIBUTING.md` for more.
 
 ---
 
-## Screenshots & GIFs guidelines
-
-- Put images under `docs/images/` (or `assets/`) and reference them in README.
-- Keep GIFs short (3–6s) and compressed; prefer a short MP4 if file size matters.
-
----
-
 ## License
 
 MIT © Vikku
