@@ -64,13 +64,6 @@ quickcompare/
 - **Visual Interface**: Clean, easy-to-use web interface with platform logos and filters
 - **Real-Time ETAs**: See delivery times for each platform before you order
 
-### 🛠️ **For Developers**
-- **Professional Architecture**: Clean separation of concerns with modular design
-- **Easy to Extend**: Add new platforms by implementing simple base classes
-- **Robust Caching**: Smart caching system to avoid unnecessary requests
-- **RESTful API**: Well-designed API endpoints for integration
-- **Comprehensive Testing**: Test suite for reliable functionality
-- **Environment Configuration**: Easy setup for different deployment environments
 
 ---
 
@@ -144,31 +137,6 @@ That's it! You can now search for grocery products and compare prices across pla
 4. **🎯 Filter**: Use platform filters to focus on specific delivery services
 5. **🛒 Shop**: Click on any result to go directly to the product page
 
-### **API Endpoints**
-For developers who want to integrate QuickCompare:
-
-#### **Search Products**
-```http
-POST /search
-Content-Type: application/json
-
-{
-  "query": "amul milk",
-  "address": "Kothrud, Pune",
-  "pincode": "411038"
-}
-```
-
-#### **Get Delivery Times**
-```http
-POST /eta
-Content-Type: application/json
-
-{
-  "address": "Kothrud, Pune",
-  "pincode": "411038"
-}
-```
 
 ---
 
@@ -197,65 +165,6 @@ Content-Type: application/json
 
 ---
 
-## 🛠️ **For Developers**
-
-### **Project Structure**
-```
-quickcompare/
-├── 📁 src/                    # Main source code
-│   ├── 🔧 core/               # Database, caching, utilities
-│   ├── 🕷️ scrapers/           # Platform scrapers (Blinkit, Zepto, etc.)
-│   ├── ⏱️ eta/                # Delivery time fetchers
-│   ├── 🌐 api/                # Flask routes and handlers
-│   └── 📊 models/             # Data models and schemas
-├── ⚙️ config/                 # Configuration management
-├── 🧪 tests/                  # Test suite
-├── 📜 scripts/                # Utility scripts
-├── 📁 static/                 # Frontend files (HTML, CSS, JS)
-└── 📄 app.py                  # Application entry point
-```
-
-### **Adding New Platforms**
-To add support for a new grocery platform:
-
-1. **Create a scraper** in `src/scrapers/`:
-```python
-from .base import BaseScraper
-
-class NewPlatformScraper(BaseScraper):
-    def get_platform_name(self) -> str:
-        return "newplatform"
-    
-    def build_search_url(self, query: str) -> str:
-        return f"https://newplatform.com/search?q={query}"
-    
-    def parse_products(self, page) -> List[Dict[str, Any]]:
-        # Extract products from the page
-        return products
-```
-
-2. **Create an ETA fetcher** in `src/eta/`:
-```python
-from .base import BaseETA
-
-class NewPlatformETA(BaseETA):
-    # Implementation for delivery time fetching
-```
-
-3. **Add to handlers** in `src/api/handlers.py`
-4. **Update frontend** to include the new platform
-
-### **Running Tests**
-```bash
-# Test scrapers
-python -m pytest tests/test_scrapers/
-
-# Test API endpoints
-python -m pytest tests/test_api/
-
-# Test specific component
-python tests/test_scrapers/test_blinkit.py
-```
 
 ---
 
@@ -331,19 +240,11 @@ Contributions are welcome! Here's how you can help:
 - ⚡ **Performance**: Optimize scraping or caching
 - 📖 **Documentation**: Improve documentation and examples
 
-### **Development Process**
-1. **Fork** the repository
-2. **Clone** your fork locally
-3. **Create** a feature branch: `git checkout -b feature-name`
-4. **Make** your changes and test them
-5. **Commit** with descriptive messages
-6. **Push** to your fork and create a Pull Request
-
-### **Code Guidelines**
-- Follow existing code style and structure
-- Add tests for new functionality
-- Update documentation as needed
-- Test your changes thoroughly
+### **How to Contribute**
+1. **Fork** the repository on GitHub
+2. **Make** your improvements or fixes
+3. **Test** your changes to make sure they work
+4. **Submit** a pull request with your changes
 
 ---
 
