@@ -1,12 +1,12 @@
-# QuickCompare 🛒 — Smart Grocery Price Comparison
+# QuickKart 🛒 — Smart Grocery Price Comparison
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Flask](https://img.shields.io/badge/flask-2.3%2B-green)](https://flask.palletsprojects.com/)
 
-QuickCompare is a powerful web application that helps you find the best deals on groceries by comparing prices and delivery times across major Indian delivery platforms including Blinkit, Zepto, DMart, and Instamart. Never overpay for groceries again!
+QuickKart is a powerful web application that helps you find the best deals on groceries by comparing prices and delivery times across major Indian delivery platforms including Blinkit, Zepto, DMart, and Instamart. Never overpay for groceries again!
 
-## 🎯 **What Does QuickCompare Do?**
+## 🎯 **What Does QuickKart Do?**
 
 - **💰 Price Comparison**: Automatically searches for products across multiple platforms and shows you the best prices
 - **⏰ Delivery Time**: Compares delivery ETAs so you can choose based on urgency
@@ -18,10 +18,10 @@ QuickCompare is a powerful web application that helps you find the best deals on
 
 ## 🏗️ **Project Structure**
 
-QuickCompare is built with a clean, modular architecture that makes it easy to maintain and extend:
+QuickKart is built with a clean, modular architecture that makes it easy to maintain and extend:
 
 ```
-quickcompare/
+quickKart/
 ├── 📁 src/                          # Main source code
 │   ├── 🔧 core/                     # Core utilities
 │   │   ├── database.py              # Database management
@@ -128,7 +128,7 @@ That's it! You can now search for grocery products and compare prices across pla
 
 ---
 
-## 🖥️ **How to Use QuickCompare**
+## 🖥️ **How to Use QuickKart**
 
 ### **Web Interface**
 1. **🔍 Search**: Type any grocery item (e.g., "amul milk", "bread", "rice")
@@ -143,7 +143,7 @@ That's it! You can now search for grocery products and compare prices across pla
 ## 🧠 **How It Works**
 
 ### **Behind the Scenes**
-1. **Web Scraping**: When you search, QuickCompare simultaneously visits each platform's website
+1. **Web Scraping**: When you search, QuickKart simultaneously visits each platform's website
 2. **Smart Parsing**: Extracts product names, prices, quantities, and images from each site
 3. **Product Matching**: Uses fuzzy matching algorithms to group similar products together
 4. **Location Services**: Uses Google Maps API to get accurate delivery times for your area
@@ -204,7 +204,7 @@ DEFAULT_PINCODE=411038
 ## 🔧 **Advanced Features**
 
 ### **Smart Product Matching**
-QuickCompare uses intelligent algorithms to match similar products:
+QuickKart uses intelligent algorithms to match similar products:
 - **Quantity Normalization**: "1L", "1 Litre", "1000ml" are recognized as the same
 - **Brand Recognition**: Matches products from the same brand across platforms
 - **Fuzzy Name Matching**: Handles variations in product names
@@ -293,7 +293,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## ⭐ **Show Your Support**
 
-If QuickCompare helped you save money on groceries, please consider:
+If QuickKart helped you save money on groceries, please consider:
 - ⭐ Starring this repository
 - 🐛 Reporting bugs or requesting features
 - 🤝 Contributing to the codebase
