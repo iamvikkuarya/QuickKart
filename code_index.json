@@ -1,0 +1,19 @@
+{
+  "project": "quickcompare",
+  "root": "c:/Users/Vikku/Desktop/vault/quickcompare",
+  "files": [
+    {"path": "app.py", "summary": "Flask app entrypoint; creates app via src.api.routes.create_app and initializes DB on startup."},
+    {"path": "requirements.txt", "summary": "Python dependencies for the project, includes playwright, flask, beautifulsoup4, etc."},
+    {"path": "src/api/routes.py", "summary": "Flask Blueprint defining /config, /search, /eta endpoints and application factory create_app()."},
+    {"path": "src/api/handlers.py", "summary": "Business logic for search and ETA endpoints; coordinates scrapers, ETA services, caching, and DB persistence."},
+    {"path": "src/core/database.py", "summary": "SQLite database manager and helper functions (init_db, save_products)."},
+    {"path": "src/core/cache.py", "summary": "In-memory TTL cache with SearchCache and ETACache wrappers."},
+    {"path": "src/scrapers/base.py", "summary": "Abstract BaseScraper with Playwright browser handling, scraping lifecycle, and utilities."},
+    {"path": "src/scrapers/blinkit.py", "summary": "Blinkit scraper implementation using BaseScraper; HTML parsing via BeautifulSoup."},
+    {"path": "src/eta/base.py", "summary": "Abstract BaseETA with Playwright-based ETA fetching flow and normalization."},
+    {"path": "src/eta/blinkit.py", "summary": "Blinkit ETA implementation that fills address and extracts delivery time."},
+    {"path": "src/models/product.py", "summary": "Data models for product, search and ETA request/response objects."},
+    {"path": "tests/test_api/test_routes.py", "summary": "Tests for API routes (search + eta)."},
+    {"path": "tests/test_scrapers/test_blinkit.py", "summary": "Tests for blinkit scraper behavior and parsing."}
+  ]
+}

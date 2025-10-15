@@ -25,11 +25,32 @@
       onkeydown="if(event.key === 'Enter'){event.preventDefault(); searchProduct();}" />
   </div>
 
-  <!-- Location Status Display -->
+  <!-- Location Status Display (click to edit / use suggestions) -->
   <div class="text-center mt-3">
-    <span id="user-location" class="inline-block text-gray-600 text-sm italic bg-gray-100 rounded-full px-3 py-1">
+    <span id="user-location" onclick="enableAddressEdit(true)" role="button" tabindex="0"
+      class="inline-block text-gray-600 text-sm italic bg-gray-100 rounded-full px-3 py-1 cursor-pointer">
       📍 Detecting location...
     </span>
+    <button id="edit-location-btn" onclick="enableAddressEdit(false)"
+      class="ml-2 inline-block text-xs px-2 py-1 rounded-full border bg-white">Edit</button>
+    <button id="detect-location-btn" onclick="detectLocation()"
+      class="ml-2 inline-flex items-center text-xs px-2 py-1 rounded-full border bg-white">
+      <span id="detect-label">Detect</span>
+      <svg id="detect-spinner" class="ml-2 hidden animate-spin h-4 w-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+    </button>
+
+    <div id="address-edit-container" class="mt-3 hidden">
+      <div class="inline-flex items-center gap-2">
+        <input id="address-input" type="text" placeholder="Enter your address or select suggestion"
+          class="px-3 py-2 border rounded-lg w-80 text-sm" />
+        <button onclick="applyAddressInput()" class="px-3 py-2 rounded bg-green-500 text-white text-sm">Apply</button>
+        <button onclick="cancelAddressEdit()" class="px-3 py-2 rounded border text-sm">Cancel</button>
+      </div>
+      <p id="address-hint" class="text-xs text-gray-500 mt-2">Start typing to see suggestions (powered by Google Places).</p>
+    </div>
   </div>
 
   <!-- Grocery Platform Logos -->
@@ -315,8 +336,19 @@
       }
     }
 
-    function initLocation() {
+    function initLocation(doneCallback, forceDetect = false) {
       const locationDisplay = document.getElementById("user-location");
+      // If user previously chose manual location, and we're not forcing detect, don't override
+      try {
+        const mode = localStorage.getItem('qc_location_mode');
+        if (mode === 'manual' && !forceDetect) {
+          // Already handled at maps load; call callback and skip detection
+          if (typeof doneCallback === 'function') doneCallback();
+          return;
+        }
+      } catch (e) { /* ignore */ }
+      // show detecting status
+      locationDisplay.textContent = '📍 Detecting location...';
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -342,12 +374,14 @@
                   locationDisplay.textContent = "📍 Location detected";
                 }
                 fetchETAs();
+                if (typeof doneCallback === 'function') doneCallback();
               });
           },
           () => {
             locationDisplay.textContent = "📍 Unable to get location. Using default (Pune)";
             locationData.pincode = "411038";
             fetchETAs();
+            if (typeof doneCallback === 'function') doneCallback();
           },
           { enableHighAccuracy: true, timeout: 5000 }
         );
@@ -355,6 +389,7 @@
         locationDisplay.textContent = "📍 Geolocation not supported.";
         locationData.pincode = "411038";
         fetchETAs();
+        if (typeof doneCallback === 'function') doneCallback();
       }
     }
 
@@ -368,6 +403,128 @@
         parts.shift();
       }
       return parts.join(", ");
+    }
+
+  // --- Address edit & autocomplete helpers ---
+    let _placesAutocomplete = null;
+
+    function enableAddressEdit(keepCurrent = true) {
+      document.getElementById('address-edit-container').classList.remove('hidden');
+      const input = document.getElementById('address-input');
+      input.value = keepCurrent ? (locationData.address || '') : '';
+      input.focus();
+      // If Places Autocomplete available, bind it lazily
+      if (window.google && google.maps && google.maps.places && !_placesAutocomplete) {
+        setupPlacesAutocomplete();
+      }
+    }
+
+    function cancelAddressEdit() {
+      document.getElementById('address-edit-container').classList.add('hidden');
+    }
+
+    function applyAddressInput() {
+      const val = document.getElementById('address-input').value.trim();
+      if (!val) return;
+
+      // If autocomplete produced a place selection, it will trigger place_changed handler.
+      // Otherwise, fall back to geocoding the typed address.
+      if (window.google && google.maps && google.maps.places && !_placesAutocomplete) {
+        setupPlacesAutocomplete();
+      }
+
+      if (window.google && google.maps && google.maps.Geocoder) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: val }, (results, status) => {
+          if (status === 'OK' && results && results[0]) {
+            const r = results[0];
+            const loc = r.geometry.location;
+            locationData.latitude = loc.lat();
+            locationData.longitude = loc.lng();
+            locationData.address = stripPlusCodeFromAddress(r.formatted_address || val);
+            const comps = r.address_components || [];
+            const pinComp = comps.find(c => c.types.includes('postal_code'));
+            if (pinComp) locationData.pincode = pinComp.long_name;
+            document.getElementById('user-location').textContent = '📍 ' + locationData.address;
+            // Persist manual preference and saved location
+            try { localStorage.setItem('qc_location_mode', 'manual'); localStorage.setItem('qc_location_data', JSON.stringify(locationData)); } catch (e) {}
+            cancelAddressEdit();
+            fetchETAs();
+          } else {
+            // No geocode result — accept raw address but don't change coords
+            alert('Unable to resolve address. Please select a suggestion or try a different query.');
+          }
+        });
+      } else {
+        // No Google Maps available — just set the address string and refetch ETAs
+        locationData.address = val;
+        document.getElementById('user-location').textContent = '📍 ' + locationData.address;
+        cancelAddressEdit();
+        fetchETAs();
+      }
+    }
+
+    function setupPlacesAutocomplete() {
+      try {
+        const input = document.getElementById('address-input');
+        _placesAutocomplete = new google.maps.places.Autocomplete(input, { types: ['geocode'] });
+        _placesAutocomplete.setFields(['address_components', 'formatted_address', 'geometry']);
+        _placesAutocomplete.addListener('place_changed', () => {
+          const place = _placesAutocomplete.getPlace();
+          if (!place || !place.geometry) return;
+          const loc = place.geometry.location;
+          locationData.latitude = loc.lat();
+          locationData.longitude = loc.lng();
+          locationData.address = stripPlusCodeFromAddress(place.formatted_address || input.value);
+          const comps = place.address_components || [];
+          const pinComp = comps.find(c => c.types.includes('postal_code'));
+          if (pinComp) locationData.pincode = pinComp.long_name;
+          document.getElementById('user-location').textContent = '📍 ' + locationData.address;
+          // Persist manual selection
+          try { localStorage.setItem('qc_location_mode', 'manual'); localStorage.setItem('qc_location_data', JSON.stringify(locationData)); } catch (e) {}
+          cancelAddressEdit();
+          fetchETAs();
+        });
+      } catch (e) {
+        console.warn('Places autocomplete setup failed', e);
+      }
+    }
+
+    // Helper to toggle detect button loading state
+    function setDetectButtonLoading(loading) {
+      const btn = document.getElementById('detect-location-btn');
+      const spinner = document.getElementById('detect-spinner');
+      const label = document.getElementById('detect-label');
+      if (!btn || !spinner || !label) return;
+      if (loading) {
+        btn.setAttribute('disabled', 'true');
+        spinner.classList.remove('hidden');
+        label.textContent = 'Detecting';
+      } else {
+        btn.removeAttribute('disabled');
+        spinner.classList.add('hidden');
+        label.textContent = 'Detect';
+      }
+    }
+
+    function detectLocation() {
+      // Prevent multiple clicks and show spinner
+      setDetectButtonLoading(true);
+      // Hide address editor if open
+      cancelAddressEdit();
+      // Call initLocation with a callback so we can stop spinner when done
+      let done = false;
+      try {
+        initLocation(() => {
+          done = true;
+          setDetectButtonLoading(false);
+          try { localStorage.setItem('qc_location_mode', 'auto'); localStorage.removeItem('qc_location_data'); } catch (e) {}
+        }, true);
+      } catch (e) {
+        console.warn('detectLocation failed', e);
+      }
+      // Fallback: ensure button is re-enabled after 10s in case callbacks didn't run
+      setTimeout(() => { if (!done) setDetectButtonLoading(false); }, 10000);
     }
 
     async function fetchETAs() {
@@ -398,12 +555,33 @@
         const response = await fetch('/config');
         const config = await response.json();
         const script = document.getElementById('google-maps-script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.maps_api_key}&libraries=places&callback=initLocation`;
+        // Load maps and call our init entry point (which will handle persisted mode)
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.maps_api_key}&libraries=places&callback=__qc_on_maps_loaded`;
       } catch (error) {
         console.error('Failed to load Google Maps API key:', error);
         // Fallback to initialize location without maps
-        initLocation();
+        __qc_on_maps_loaded();
       }
+    }
+
+    // Called by Google Maps loader callback
+    function __qc_on_maps_loaded() {
+      // Restore persisted location preference if available
+      try {
+        const mode = localStorage.getItem('qc_location_mode');
+        if (mode === 'manual') {
+          const saved = JSON.parse(localStorage.getItem('qc_location_data') || 'null');
+          if (saved && saved.latitude && saved.longitude) {
+            locationData = saved;
+            document.getElementById('user-location').textContent = '📍 ' + (locationData.address || 'Selected location');
+            fetchETAs();
+            return;
+          }
+        }
+      } catch (e) { /* ignore */ }
+
+      // Default: attempt detection
+      initLocation();
     }
 
     window.onload = loadGoogleMaps;
