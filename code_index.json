@@ -1,7 +1,6 @@
 {
   "project": "quickcompare",
-  "root": "c:/Users/Vikku/Desktop/vault/quickcompare",
-  "files": [
+  "root": ".",  "files": [
     {"path": "app.py", "summary": "Flask app entrypoint; creates app via src.api.routes.create_app and initializes DB on startup."},
     {"path": "requirements.txt", "summary": "Python dependencies for the project, includes playwright, flask, beautifulsoup4, etc."},
     {"path": "src/api/routes.py", "summary": "Flask Blueprint defining /config, /search, /eta endpoints and application factory create_app()."},

@@ -522,10 +522,11 @@
         }, true);
       } catch (e) {
         console.warn('detectLocation failed', e);
+        done = true;
+        setDetectButtonLoading(false);
       }
       // Fallback: ensure button is re-enabled after 10s in case callbacks didn't run
-      setTimeout(() => { if (!done) setDetectButtonLoading(false); }, 10000);
-    }
+      setTimeout(() => { if (!done) setDetectButtonLoading(false); }, 10000);    }
 
     async function fetchETAs() {
       const strip = document.getElementById("eta-strip");
