@@ -4,7 +4,16 @@ DMart platform scraper implementation.
 
 import requests
 from typing import List, Dict, Any
-from .base import BaseScraper
+
+# Handle both individual testing and module imports
+try:
+    from .base import BaseScraper
+except ImportError:
+    # For individual testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(__file__))
+    from base import BaseScraper
 
 
 class DmartScraper(BaseScraper):

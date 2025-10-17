@@ -4,7 +4,16 @@ Instamart platform scraper implementation.
 
 from typing import List, Dict, Any
 from playwright.sync_api import TimeoutError
-from .base import BaseScraper
+
+# Handle both individual testing and module imports
+try:
+    from .base import BaseScraper
+except ImportError:
+    # For individual testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(__file__))
+    from base import BaseScraper
 
 
 class InstamartScraper(BaseScraper):

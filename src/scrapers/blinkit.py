@@ -4,7 +4,16 @@ Blinkit platform scraper implementation.
 
 from typing import List, Dict, Any
 from bs4 import BeautifulSoup
-from .base import BaseScraper
+
+# Handle both individual testing and module imports
+try:
+    from .base import BaseScraper
+except ImportError:
+    # For individual testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(__file__))
+    from base import BaseScraper
 
 
 class BlinkitScraper(BaseScraper):
@@ -76,9 +85,9 @@ class BlinkitScraper(BaseScraper):
 
 
 # Factory function to maintain backward compatibility
-def run_scraper(search_query: str) -> List[Dict[str, Any]]:
+def run_scraper(search_query: str, headless: bool = True) -> List[Dict[str, Any]]:
     """Legacy function for backward compatibility."""
-    scraper = BlinkitScraper()
+    scraper = BlinkitScraper(headless=headless)
     return scraper.scrape(search_query)
 
 
@@ -96,7 +105,7 @@ def is_complete(item: Dict[str, Any]) -> bool:
 if __name__ == "__main__":
     # Manual test
     scraper = BlinkitScraper(headless=False)  # Set to True for production
-    results = scraper.scrape("amul milk")
+    results = scraper.scrape("bread")
     
     from pprint import pprint
     pprint(results[:10])

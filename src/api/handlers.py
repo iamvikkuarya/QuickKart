@@ -100,9 +100,10 @@ class SearchHandler:
         results = []
         
         with ThreadPoolExecutor(max_workers=3) as executor:
-            # Submit scraper tasks
-            fut_blinkit = executor.submit(run_scraper, query)
-            fut_zepto = executor.submit(run_zepto_scraper, query)
+            # Submit scraper tasks (use head mode if debugging)
+            headless_mode = not self.debug  # Show browser if debug=True
+            fut_blinkit = executor.submit(run_scraper, query, headless_mode)
+            fut_zepto = executor.submit(run_zepto_scraper, query, headless_mode)
             
             # Get DMart store details
             unique_id, store_id = get_store_details(pincode)

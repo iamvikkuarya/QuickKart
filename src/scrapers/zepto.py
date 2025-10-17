@@ -5,7 +5,16 @@ Zepto platform scraper implementation.
 import re
 from typing import List, Dict, Any
 from playwright.sync_api import TimeoutError
-from .base import BaseScraper
+
+# Handle both individual testing and module imports
+try:
+    from .base import BaseScraper
+except ImportError:
+    # For individual testing
+    import sys
+    import os
+    sys.path.append(os.path.dirname(__file__))
+    from base import BaseScraper
 
 
 class ZeptoScraper(BaseScraper):
@@ -71,9 +80,9 @@ class ZeptoScraper(BaseScraper):
 
 
 # Factory function to maintain backward compatibility
-def run_zepto_scraper(search_query: str) -> List[Dict[str, Any]]:
+def run_zepto_scraper(search_query: str, headless: bool = True) -> List[Dict[str, Any]]:
     """Legacy function for backward compatibility."""
-    scraper = ZeptoScraper()
+    scraper = ZeptoScraper(headless=headless)
     return scraper.scrape(search_query)
 
 
