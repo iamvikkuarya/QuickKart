@@ -3,16 +3,17 @@ Flask routes for QuickCompare API.
 """
 
 from flask import Blueprint, request, jsonify
-from .handlers import ConfigHandler, SearchHandler, ETAHandler, StaticHandler
+from .handlers import ConfigHandler, SearchHandler, ETAHandler, StaticHandler, ProductSuggestionsHandler
 
 # Create Blueprint for API routes
 api_bp = Blueprint('api', __name__)
 
 # Initialize handlers
 config_handler = ConfigHandler()
-search_handler = SearchHandler(debug=True)
+search_handler = SearchHandler(debug=False)
 eta_handler = ETAHandler()
 static_handler = StaticHandler()
+suggestions_handler = ProductSuggestionsHandler()
 
 
 @api_bp.route("/config", methods=['GET'])
@@ -40,6 +41,16 @@ def eta():
         request_data = request.get_json()
         eta_results, status_code = eta_handler.get_eta(request_data)
         return jsonify(eta_results), status_code
+    except Exception as e:
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500
+
+
+@api_bp.route('/api/product-suggestions', methods=['GET'])
+def product_suggestions():
+    """Get product suggestions for search autocomplete."""
+    try:
+        suggestions, status_code = suggestions_handler.get_product_suggestions()
+        return jsonify(suggestions), status_code
     except Exception as e:
         return jsonify({"error": f"Internal server error: {str(e)}"}), 500
 
