@@ -277,7 +277,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - 🐛 **Bug Reports:** [GitHub Issues](https://github.com/iamvikkuarya/QuickKart/issues)
 - 💡 **Feature Requests:** [GitHub Discussions](https://github.com/iamvikkuarya/QuickKart/discussions)
-- 📧 **Contact:** [Your Email](mailto:your.email@example.com)
+- 📧 **Contact:** [vivekkumararya2179@gmail.com](mailto:vivekkumararya2179@gmail.com)
 
 ---
 
