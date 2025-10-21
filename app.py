@@ -92,24 +92,38 @@ def eta():
         if time.time() - ts < ETA_CACHE_TTL:
             return jsonify(result)
 
-    out = {"blinkit": "N/A", "zepto": "N/A", "dmart": "N/A"}
-    with ThreadPoolExecutor(max_workers=3) as ex:
-        fut_b = ex.submit(get_blinkit_eta, address)
-        fut_z = ex.submit(get_zepto_eta, address)
-        fut_d = ex.submit(get_dmart_eta, pincode)  # 🔑 use pincode for Dmart
+    out = {"blinkit": "Service temporarily unavailable", "zepto": "Service temporarily unavailable", "dmart": "Service temporarily unavailable"}
+    
+    try:
+        with ThreadPoolExecutor(max_workers=3) as ex:
+            fut_b = ex.submit(get_blinkit_eta, address)
+            fut_z = ex.submit(get_zepto_eta, address)
+            fut_d = ex.submit(get_dmart_eta, pincode)
 
-        try:
-            out["blinkit"] = fut_b.result(timeout=25) or "N/A"
-        except Exception as e:
-            print("ETA blinkit error:", e)
-        try:
-            out["zepto"] = fut_z.result(timeout=25) or "N/A"
-        except Exception as e:
-            print("ETA zepto error:", e)
-        try:
-            out["dmart"] = fut_d.result(timeout=25) or "N/A"
-        except Exception as e:
-            print("ETA dmart error:", e)
+            try:
+                result = fut_b.result(timeout=25)
+                out["blinkit"] = result if result else "N/A"
+            except Exception as e:
+                print("ETA blinkit error:", e)
+                out["blinkit"] = "Service unavailable"
+                
+            try:
+                result = fut_z.result(timeout=25)
+                out["zepto"] = result if result else "N/A"
+            except Exception as e:
+                print("ETA zepto error:", e)
+                out["zepto"] = "Service unavailable"
+                
+            try:
+                result = fut_d.result(timeout=25)
+                out["dmart"] = result if result else "N/A"
+            except Exception as e:
+                print("ETA dmart error:", e)
+                out["dmart"] = "Service unavailable"
+                
+    except Exception as e:
+        print(f"⚠️ ETA fetch failed: {e}")
+        # Return default unavailable message
 
     eta_cache[eta_key] = (time.time(), out)
     return jsonify(out)
