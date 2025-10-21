@@ -45,8 +45,8 @@ RUN playwright install-deps chromium
 # Copy application code
 COPY . .
 
-# Initialize database
-RUN python -c "from src.core.db import init_db; init_db(); print('Database initialized')"
+# Create tmp directory for database
+RUN mkdir -p /tmp
 
 # Expose port
 EXPOSE $PORT

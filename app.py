@@ -6,6 +6,10 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 load_dotenv()
 
+# Set production environment if not set
+if not os.environ.get("FLASK_ENV"):
+    os.environ["FLASK_ENV"] = "production"
+
 # --- Product scrapers ---
 from src.scrapers.blinkit_scraper import run_scraper
 from src.scrapers.zepto_scraper import run_zepto_scraper
@@ -55,26 +59,30 @@ def get_config():
 # --------------------------------------------------------------------------------------
 def save_products(products):
     """Save raw scraper products into SQLite."""
-    conn = sqlite3.connect(DB_NAME)
-    cur = conn.cursor()
-    for p in products:
-        try:
-            cur.execute("""
-                INSERT INTO products (name, quantity, platform, price, product_url, image_url, in_stock)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                p.get("name"),
-                p.get("quantity"),
-                p.get("platform"),
-                p.get("price"),
-                p.get("product_url"),
-                p.get("image_url"),
-                int(p.get("in_stock", True))
-            ))
-        except Exception as e:
-            print("⚠️ DB insert error:", e, p)
-    conn.commit()
-    conn.close()
+    try:
+        from src.core.db import get_db_connection
+        conn = get_db_connection()
+        cur = conn.cursor()
+        for p in products:
+            try:
+                cur.execute("""
+                    INSERT INTO products (name, quantity, platform, price, product_url, image_url, in_stock)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    p.get("name"),
+                    p.get("quantity"),
+                    p.get("platform"),
+                    p.get("price"),
+                    p.get("product_url"),
+                    p.get("image_url"),
+                    int(p.get("in_stock", True))
+                ))
+            except Exception as e:
+                print("⚠️ DB insert error:", e, p)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"⚠️ Save products failed: {e}")
 
 # --------------------------------------------------------------------------------------
 #                                 /eta

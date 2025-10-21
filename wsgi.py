@@ -4,14 +4,7 @@ WSGI entry point for production deployment
 """
 
 import os
-from src.core.db import init_db
 from app import app
-
-# Initialize database if it doesn't exist
-if not os.path.exists("product.db"):
-    print("🔧 Initializing database...")
-    init_db()
-    print("✅ Database initialized")
 
 # This is what WSGI servers will import
 application = app
