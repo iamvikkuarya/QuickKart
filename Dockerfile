@@ -48,8 +48,8 @@ COPY . .
 # Initialize database
 RUN python -c "from src.core.db import init_db; init_db(); print('Database initialized')"
 
-# Expose port (Render will set PORT env var)
-EXPOSE 10000
+# Expose port
+EXPOSE $PORT
 
 # Start command
 CMD gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
