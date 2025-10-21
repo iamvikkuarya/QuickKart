@@ -1,0 +1,29 @@
+# QuickKart .gitattributes
+# This file controls how GitHub detects languages in the repository
+
+# Mark static files as vendored (exclude from language stats)
+static/* linguist-vendored
+
+# Alternative: Mark HTML as documentation (exclude from language stats)
+# *.html linguist-documentation
+
+# Mark specific large files as vendored if needed
+# static/index.html linguist-vendored
+
+# Ensure Python files are properly detected
+*.py linguist-language=Python
+
+# Mark configuration files as data (exclude from language stats)
+*.json linguist-language=JSON
+*.md linguist-documentation
+*.txt linguist-documentation
+*.env* linguist-documentation
+
+# Mark database files as binary (exclude from language stats)
+*.db linguist-generated=true
+
+# Mark image assets as binary (exclude from language stats)
+*.webp linguist-generated=true
+*.png linguist-generated=true
+*.jpg linguist-generated=true
+*.jpeg linguist-generated=true
