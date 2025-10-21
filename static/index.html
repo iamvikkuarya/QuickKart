@@ -310,27 +310,33 @@
                 <div class="glass-panel rounded-lg p-4">
                     <div class="text-sm mb-3" style="color: var(--text-secondary)">Delivering in</div>
                     <div class="flex gap-4 items-center">
-                        <div class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
+                        <a href="https://www.zeptonow.com/" target="_blank" rel="noopener noreferrer"
+                            class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
                             data-platform="zepto">
                             <div class="eta-pill" id="eta-zepto">Loading...</div>
-                            <div class="logo-container bg-purple-600">
-                                <span class="text-white font-bold text-xs">Zepto</span>
+                            <div class="logo-container">
+                                <img src="static/assets/zepto_logo.webp" alt="Zepto"
+                                    class="w-full h-full object-contain" onerror="this.style.display='none';">
                             </div>
-                        </div>
-                        <div class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
+                        </a>
+                        <a href="https://blinkit.com/" target="_blank" rel="noopener noreferrer"
+                            class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
                             data-platform="blinkit">
                             <div class="eta-pill" id="eta-blinkit">Loading...</div>
-                            <div class="logo-container bg-yellow-400">
-                                <span class="text-black font-bold text-xs">Blinkit</span>
+                            <div class="logo-container">
+                                <img src="static/assets/blinkit_logo.webp" alt="Blinkit"
+                                    class="w-full h-full object-contain" onerror="this.style.display='none';">
                             </div>
-                        </div>
-                        <div class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
+                        </a>
+                        <a href="https://www.dmart.in/" target="_blank" rel="noopener noreferrer"
+                            class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
                             data-platform="dmart">
                             <div class="eta-pill" id="eta-dmart">Loading...</div>
-                            <div class="logo-container bg-green-500">
-                                <span class="text-white font-bold text-xs">DMart</span>
+                            <div class="logo-container">
+                                <img src="static/assets/Dmart_logo.webp" alt="DMart"
+                                    class="w-full h-full object-contain" onerror="this.style.display='none';">
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </section>
@@ -358,25 +364,29 @@
                 <div class="flex gap-6">
                     <div class="trending-item cursor-pointer group" data-product="atta">
                         <div class="trending-frame group-hover:opacity-80 transition-opacity">
-                            <span class="text-2xl">🌾</span>
+                            <img src="static/assets/atta.webp" alt="Atta" class="w-full h-full object-cover rounded-lg"
+                                onerror="this.style.display='none';">
                         </div>
                         <div class="text-sm mt-2" style="color: var(--text-secondary)">Atta</div>
                     </div>
                     <div class="trending-item cursor-pointer group" data-product="rice">
                         <div class="trending-frame group-hover:opacity-80 transition-opacity">
-                            <span class="text-2xl">🍚</span>
+                            <img src="static/assets/rice.webp" alt="Rice" class="w-full h-full object-cover rounded-lg"
+                                onerror="this.style.display='none';">
                         </div>
                         <div class="text-sm mt-2" style="color: var(--text-secondary)">Rice</div>
                     </div>
                     <div class="trending-item cursor-pointer group" data-product="detergent">
                         <div class="trending-frame group-hover:opacity-80 transition-opacity">
-                            <span class="text-2xl">🧴</span>
+                            <img src="static/assets/detergent.webp" alt="Detergent"
+                                class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none';">
                         </div>
                         <div class="text-sm mt-2" style="color: var(--text-secondary)">Detergent</div>
                     </div>
                     <div class="trending-item cursor-pointer group" data-product="coffee">
                         <div class="trending-frame group-hover:opacity-80 transition-opacity">
-                            <span class="text-2xl">☕</span>
+                            <img src="static/assets/coffee.webp" alt="Coffee"
+                                class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none';">
                         </div>
                         <div class="text-sm mt-2" style="color: var(--text-secondary)">Coffee</div>
                     </div>
@@ -395,8 +405,9 @@
 
                 <!-- Main loading animation -->
                 <div class="flex items-center justify-center gap-6 mb-6">
-                    <div id="loading-logo" class="h-10 w-10 bg-purple-600 rounded flex items-center justify-center">
-                        <span class="text-white font-bold text-xs">Z</span>
+                    <div id="loading-logo" class="h-10 w-10 rounded flex items-center justify-center">
+                        <img id="loading-logo-img" src="static/assets/zepto_logo.webp" alt="Platform Logo"
+                            class="w-full h-full object-contain" onerror="this.style.display='none';">
                     </div>
                     <div class="flex gap-2">
                         <div class="loading-dot"></div>
@@ -572,9 +583,9 @@
 
         // Platform metadata
         const PLATFORM_META = {
-            blinkit: { name: "Blinkit", color: "bg-yellow-500" },
-            zepto: { name: "Zepto", color: "bg-purple-500" },
-            dmart: { name: "DMart", color: "bg-green-500" }
+            blinkit: { name: "Blinkit", color: "bg-yellow-500", logo: "static/assets/blinkit_logo.webp" },
+            zepto: { name: "Zepto", color: "bg-purple-500", logo: "static/assets/zepto_logo.webp" },
+            dmart: { name: "DMart", color: "bg-green-500", logo: "static/assets/Dmart_logo.webp" }
         };
 
         // DOM elements
@@ -1068,8 +1079,8 @@
                            class="flex justify-between items-center rounded-lg px-3 py-3 border hover:opacity-80 transition-opacity"
                            style="background-color: var(--bg-elevated); border-color: var(--border-primary)">
                             <div class="flex items-center gap-2">
-                                <div class="overflow-hidden rounded-lg w-16 h-8 flex items-center justify-center ${meta.color}">
-                                    <span class="text-white font-bold text-xs">${meta.name}</span>
+                                <div class="overflow-hidden rounded-lg w-16 h-8 flex items-center justify-center">
+                                    ${meta.logo ? `<img src="${meta.logo}" alt="${meta.name}" class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none';">` : `<span class="text-gray-800 font-bold text-xs">${meta.name}</span>`}
                                 </div>
                                 ${stockStatus}
                             </div>
@@ -1147,17 +1158,17 @@
         // Loading animation
         function startLoadingAnimation() {
             const logos = [
-                { color: 'bg-purple-600', text: 'Z' },
-                { color: 'bg-yellow-400', text: 'B' },
-                { color: 'bg-green-500', text: 'D' }
+                { src: 'static/assets/zepto_logo.webp', alt: 'Zepto' },
+                { src: 'static/assets/blinkit_logo.webp', alt: 'Blinkit' },
+                { src: 'static/assets/Dmart_logo.webp', alt: 'DMart' }
             ];
             let index = 0;
 
             const interval = setInterval(() => {
-                const logoElement = document.getElementById('loading-logo');
-                if (logoElement) {
-                    logoElement.className = `h-10 w-10 ${logos[index].color} rounded flex items-center justify-center`;
-                    logoElement.innerHTML = `<span class="text-white font-bold text-xs">${logos[index].text}</span>`;
+                const logoImg = document.getElementById('loading-logo-img');
+                if (logoImg) {
+                    logoImg.src = logos[index].src;
+                    logoImg.alt = logos[index].alt;
                     index = (index + 1) % logos.length;
                 }
             }, 1200);
