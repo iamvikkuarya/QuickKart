@@ -1,178 +1,290 @@
-# QuickKart 🛒 — Grocery price comparison (Blinkit & Zepto)
+# 🛒 QuickKart
 
-[![CI](https://github.com/iamvikkuarya/QuickKart/actions/workflows/ci.yml/badge.svg)](https://github.com/iamvikkuarya/QuickKart/actions)
-[![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](#)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue)]()
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+**Smart grocery price comparison across India's top quick-commerce platforms**
 
-> Compare grocery product prices across delivery platforms (Blinkit, Zepto). Proof‑of‑concept scrapers + ETA fetchers with a simple Flask frontend.
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
+[![Flask](https://img.shields.io/badge/flask-2.0%2B-green.svg)](https://flask.palletsprojects.com)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/iamvikkuarya/QuickKart.svg)](https://github.com/iamvikkuarya/QuickKart/stargazers)
 
----
-
-## Table of contents
-
-- [Why QuickKart](#why-quickkart)
-- [Features](#features)
-- [Quick start](#quick-start)
-- [Usage (API)](#usage-api)
-- [Architecture](#architecture)
-- [Product schema](#product-schema)
-- [Configuration](#configuration)
-- [Development notes](#development-notes)
-- [Contributing](#contributing)
-- [License](#license)
+> **Never overpay for groceries again!** QuickKart instantly compares prices across Blinkit, Zepto, and DMart to help you find the best deals with real-time delivery estimates.
 
 ---
 
-## Why QuickKart
+## ✨ Features
 
-QuickKart helps you instantly compare grocery items across Blinkit and Zepto by scraping product listings and normalizing them into a single format, plus showing delivery ETA per platform — useful for price/availability comparisons and building a better shopping UI.
+🔍 **Smart Product Matching** - Intelligent fuzzy matching across platforms  
+⚡ **Real-time Price Comparison** - Live scraping with 5-minute cache  
+📍 **Location-aware Results** - Delivery times based on your location  
+🌙 **Modern UI** - Dark/light theme with mobile-first design  
+🚀 **Lightning Fast** - Concurrent scraping for instant results  
+💾 **Smart Caching** - Optimized performance with SQLite storage  
 
 ---
 
-## Features
+## 🚀 Quick Start
 
-- Playwright-based scrapers for Blinkit & Zepto.  
-- Normalized product schema for easy comparison.  
-- Per-platform delivery ETA fetchers.  
-- Flask backend with caching and SQLite persistence.  
-- Lightweight SPA frontend (Tailwind) with location detection.
+### Prerequisites
+- Python 3.10+
+- Google Maps API key ([Get one here](https://console.cloud.google.com/apis/credentials))
 
---- 
-
-## Quick start
+### Installation
 
 ```bash
-# clone
+# Clone the repository
 git clone https://github.com/iamvikkuarya/QuickKart.git
 cd QuickKart
 
-# python venv
+# Create virtual environment
 python -m venv .venv
-# mac/linux
-source .venv/bin/activate
-# windows
-.venv\\Scripts\\activate
 
-# install deps
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-# if using Playwright (required for scrapers):
-pip install playwright
+
+# Install Playwright browsers
 playwright install
 
-# create .env in project root (example)
-cat > .env <<EOF
-GOOGLE_MAPS_API_KEY=YOUR_BROWSER_MAPS_KEY
-FLASK_ENV=development
-EOF
+# Setup environment
+cp .env.example .env
+# Edit .env and add your Google Maps API key
+```
 
-# run (development)
-export FLASK_APP=app.py
-flask run --reload
-# or
+### Configuration
+
+1. **Get Google Maps API Key:**
+   - Visit [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+   - Enable: Maps JavaScript API, Places API, Geocoding API
+   - Create credentials and copy the API key
+
+2. **Update `.env` file:**
+   ```env
+   GOOGLE_MAPS_API_KEY=your_actual_api_key_here
+   ```
+
+### Run the Application
+
+```bash
+# Start the server
+python run.py
+
+# Or use Flask directly
 python app.py
 ```
 
----
-
-## Usage (API)
-
-- `POST /search`  
-  Request JSON:  
-  ```json
-  { "query": "milk", "latitude": 18.5204, "longitude": 73.8567, "address": "Kothrud, Pune" }
-  ```
-  Response: merged list of normalized product objects from Blinkit & Zepto.
-
-- `POST /eta`  
-  Request JSON:
-  ```json
-  { "address": "Kothrud, Pune", "pincode": "411038" }
-  ```
-  Response: ETA info per supported platform.
+Visit `http://localhost:5000` to start comparing prices! 🎉
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
-Frontend (Tailwind SPA)
-   ↕
-Flask backend (app.py)
-   ↕
-src/
-├── scrapers/     -- Playwright-based scrapers
-├── eta/          -- ETA fetchers  
-└── core/         -- Utils & DB
-DB: SQLite (product.db)
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Flask API      │    │   Scrapers      │
+│                 │    │                  │    │                 │
+│ • Tailwind CSS  │◄──►│ • /search        │◄──►│ • Blinkit       │
+│ • Vanilla JS    │    │ • /eta           │    │ • Zepto         │
+│ • Google Maps   │    │ • Caching        │    │ • DMart         │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │   SQLite DB     │
+                       │                 │
+                       │ • Products      │
+                       │ • Cache         │
+                       └─────────────────┘
 ```
-
-Key notes:
-- Scrapers return a normalized JSON schema so results can be merged/compared on the frontend.
-- Caching: in-memory caches for search results and ETA with short TTL (default 5 minutes).
 
 ---
 
-## Product schema
+## 📱 Screenshots
 
-All scrapers return objects normalized to:
+### Home Screen
+- Clean, intuitive interface
+- Real-time delivery estimates
+- Location-based results
 
+### Search Results
+- Side-by-side price comparison
+- Best price highlighting
+- Direct links to purchase
+
+### Smart Features
+- Recent search history
+- Trending items
+- Platform filtering
+
+---
+
+## 🔧 API Reference
+
+### Search Products
+```http
+POST /search
+Content-Type: application/json
+
+{
+  "query": "milk",
+  "address": "Kothrud, Pune",
+  "pincode": "411038",
+  "latitude": 18.5204,
+  "longitude": 73.8567
+}
+```
+
+**Response:**
+```json
+[
+  {
+    "name": "Amul Gold Milk",
+    "quantity": "500ml",
+    "image_url": "https://...",
+    "platforms": [
+      {
+        "platform": "blinkit",
+        "price": "₹28",
+        "delivery_time": "12 min",
+        "product_url": "https://...",
+        "in_stock": true
+      }
+    ]
+  }
+]
+```
+
+### Get Delivery ETAs
+```http
+POST /eta
+Content-Type: application/json
+
+{
+  "address": "Kothrud, Pune",
+  "pincode": "411038"
+}
+```
+
+**Response:**
 ```json
 {
-  "platform": "blinkit | zepto",
-  "name": "Product Name",
-  "price": "₹123",
-  "quantity": "500 ml",
-  "image_url": "https://...",
-  "product_url": "https://...",
-  "delivery_time": "N/A",
-  "in_stock": true
+  "blinkit": "12 min",
+  "zepto": "15 min", 
+  "dmart": "Tomorrow 9 to 11 AM"
 }
 ```
 
 ---
 
-## Configuration
+## 🛠️ Development
 
-- Create `.env` for secrets (do **not** commit it). Add `.env` to `.gitignore`.
-
-Example `.env`:
+### Project Structure
 ```
-GOOGLE_MAPS_API_KEY=AIza...
-FLASK_ENV=development
+QuickKart/
+├── src/
+│   ├── scrapers/          # Platform-specific scrapers
+│   │   ├── blinkit_scraper.py
+│   │   ├── zepto_scraper.py
+│   │   └── dmart_scraper.py
+│   ├── eta/               # Delivery time fetchers
+│   └── core/              # Utilities & database
+├── static/                # Frontend assets
+├── app.py                 # Flask application
+└── requirements.txt       # Dependencies
 ```
 
-**Maps key guidance:** the Maps JavaScript key must be usable in the browser, so restrict it by **HTTP referrers** in Google Cloud Console (your deployment domain). For server-side Google APIs (if used), use a separate server key restricted by your server IP.
+### Running in Development Mode
+
+```bash
+# Enable debug mode
+export FLASK_ENV=development
+export FLASK_DEBUG=1
+
+# Run with auto-reload
+python app.py
+```
+
+### Debugging Scrapers
+
+```bash
+# Run scrapers in headed mode for debugging
+# Edit scraper files and set headless=False
+```
 
 ---
 
-## Development notes & debugging tips
+## 🤝 Contributing
 
-- Playwright: for debugging selectors run in headed mode (`headful`) and open devtools; this makes it easier to inspect Blinkit / Zepto DOM structure.  
-- If you get `0 products` returned: confirm search page scrolled enough and selectors are accurate — try manual browsing in headed Playwright to identify selector changes.  
-- Keep scrapers robust: add retry logic, dynamic timeouts, and short backoff for flaky selectors.
+We welcome contributions! Here's how you can help:
 
----
+1. **🍴 Fork the repository**
+2. **🌿 Create a feature branch** (`git checkout -b feature/amazing-feature`)
+3. **💻 Make your changes**
+4. **✅ Test thoroughly**
+5. **📝 Commit your changes** (`git commit -m 'Add amazing feature'`)
+6. **🚀 Push to the branch** (`git push origin feature/amazing-feature`)
+7. **🔄 Open a Pull Request**
 
-## Tests & CI
-
-Add GitHub Actions to run `pytest` and (optionally) build docs. Example workflow file path: `.github/workflows/ci.yml`.
-
----
-
-## Contributing
-
-Contributions welcome — open issues/PRs.  
-Please follow these steps:
-
-1. Fork → branch → implement.
-2. Run tests and linters locally.
-3. Open a PR with description and testing notes.
-
-See `CONTRIBUTING.md` for more.
+### Development Guidelines
+- Follow PEP 8 for Python code
+- Add comments for complex logic
+- Test scrapers with multiple products
+- Update documentation for new features
 
 ---
 
-## License
+## 🐛 Troubleshooting
 
-MIT © Vikku
+### Common Issues
+
+**Scrapers returning 0 results:**
+- Check if platform websites have changed their structure
+- Verify internet connection
+- Try running in headed mode for debugging
+
+**Location detection not working:**
+- Ensure Google Maps API key is valid
+- Check if required APIs are enabled
+- Verify browser permissions for location access
+
+**Slow performance:**
+- Check cache TTL settings
+- Verify database isn't corrupted
+- Monitor network latency
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Playwright** - For reliable web scraping
+- **Flask** - For the lightweight web framework
+- **Tailwind CSS** - For beautiful, responsive design
+- **Google Maps** - For location services
+
+---
+
+## 📞 Support
+
+- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/iamvikkuarya/QuickKart/issues)
+- 💡 **Feature Requests:** [GitHub Discussions](https://github.com/iamvikkuarya/QuickKart/discussions)
+- 📧 **Contact:** [Your Email](mailto:your.email@example.com)
+
+---
+
+<div align="center">
+
+**⭐ Star this repo if QuickKart helped you save money! ⭐**
+
+Made with ❤️ by [Vikku](https://github.com/iamvikkuarya)
+
+</div>
