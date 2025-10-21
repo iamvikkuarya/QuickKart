@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickKart - Quick Commerce Price Comparison</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            500: '#64748b',
+                            900: '#0f172a'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        /* CSS Custom Properties for Theme System */
+        :root {
+            /* Light theme colors */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-elevated: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #64748b;
+            --border-primary: #e2e8f0;
+            --border-secondary: #cbd5e1;
+        }
+
+        .dark {
+            /* Dark theme colors - AMOLED Black */
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --bg-elevated: #111111;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --border-primary: #222222;
+            --border-secondary: #333333;
+        }
+
+        /* Base styles using CSS custom properties */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .glass-panel {
+            background: rgba(17, 17, 17, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-primary);
+        }
+
+        .vendor-pill {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .eta-pill {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 500;
+            white-space: pre-line;
+            text-align: center;
+            line-height: 1.1;
+            height: 32px;
+            width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-container {
+            width: 80px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .trending-item {
+            width: 80px;
+            text-align: center;
+        }
+
+        .trending-frame {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-primary);
+            transition: all 0.2s ease;
+        }
+
+        .trending-frame:hover {
+            background: var(--bg-secondary);
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+
+        .search-suggestion,
+        .location-suggestion {
+            transition: background-color 0.2s ease;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-primary);
+        }
+
+        .search-suggestion:hover,
+        .location-suggestion:hover {
+            background: var(--bg-secondary);
+        }
+
+        .recent-chip {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-primary);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .recent-chip:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Loading animations */
+        @keyframes dotflow {
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slide {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            50% {
+                transform: translateX(0%);
+            }
+
+            100% {
+                transform: translateX(300%);
+            }
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            animation: dotflow 1s infinite;
+        }
+
+        .loading-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .loading-dot:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .loading-dot:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .loading-dot:nth-child(7) {
+            animation-delay: 0.7s;
+        }
+
+        .loading-dot:nth-child(8) {
+            animation-delay: 0.8s;
+        }
+
+        /* Input styles */
+        input[type="text"] {
+            background-color: var(--bg-elevated) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-primary) !important;
+        }
+
+        input[type="text"]:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        }
+
+        /* Smooth transitions */
+        * {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+    </style>
+
+    <!-- Google Maps API -->
+    <script id="google-maps-script"></script>
+</head>
+
+<body>
+    <!-- MAIN CONTAINER -->
+    <div class="min-h-screen">
+        <!-- HEADER -->
+        <header class="px-4 py-4">
+            <!-- Website Logo -->
+            <div class="flex justify-center mb-4">
+                <a href="/" class="cursor-pointer">
+                    <h1 id="website-logo" class="text-4xl font-bold tracking-tight">🛒 QuickKart</h1>
+                </a>
+            </div>
+
+            <div class="flex items-center justify-between mb-4">
+                <!-- Location -->
+                <div>
+                    <div class="flex items-center gap-1 text-sm" style="color: var(--text-tertiary)">
+                        <span>Delivering to</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </div>
+                    <div id="user-location" class="font-medium cursor-pointer hover:opacity-80 transition-colors"
+                        style="color: var(--text-primary)">
+                        📍 Detecting location...
+                    </div>
+                </div>
+
+                <!-- Theme Toggle -->
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-800 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1M12 20v1M4.2 4.2l.7.7M18.1 18.1l.7.7M1 12h1M22 12h1M4.2 19.8l.7-.7M18.1 5.9l.7-.7M12 7a5 5 0 100 10 5 5 0 000-10z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative">
+                <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+                    <svg class="w-5 h-5" style="color: var(--text-tertiary)" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"></path>
+                    </svg>
+                </div>
+                <input id="main-search" type="text" placeholder="Search to compare prices, availability"
+                    class="w-full pl-12 pr-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    readonly>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main id="home-page" class="px-4">
+            <!-- Vendor Pills -->
+            <section class="mb-6">
+                <div class="glass-panel rounded-lg p-4">
+                    <div class="text-sm mb-3" style="color: var(--text-secondary)">Delivering in</div>
+                    <div class="flex gap-4 items-center">
+                        <div class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
+                            data-platform="zepto">
+                            <div class="eta-pill" id="eta-zepto">Loading...</div>
+                            <div class="logo-container bg-purple-600">
+                                <span class="text-white font-bold text-xs">Zepto</span>
+                            </div>
+                        </div>
+                        <div class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
+                            data-platform="blinkit">
+                            <div class="eta-pill" id="eta-blinkit">Loading...</div>
+                            <div class="logo-container bg-yellow-400">
+                                <span class="text-black font-bold text-xs">Blinkit</span>
+                            </div>
+                        </div>
+                        <div class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
+                            data-platform="dmart">
+                            <div class="eta-pill" id="eta-dmart">Loading...</div>
+                            <div class="logo-container bg-green-500">
+                                <span class="text-white font-bold text-xs">DMart</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Search -->
+            <section class="mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold" style="color: var(--text-primary)">Recent Search</h3>
+                    <button id="clear-recent" class="hover:opacity-80 text-sm" style="color: var(--text-tertiary)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="recent-list" class="flex gap-2 flex-wrap">
+                    <!-- Recent searches will be added here -->
+                </div>
+            </section>
+
+            <!-- Trending Items -->
+            <section>
+                <h3 class="font-semibold mb-4" style="color: var(--text-primary)">Trending Items</h3>
+                <div class="flex gap-6">
+                    <div class="trending-item cursor-pointer group" data-product="atta">
+                        <div class="trending-frame group-hover:opacity-80 transition-opacity">
+                            <span class="text-2xl">🌾</span>
+                        </div>
+                        <div class="text-sm mt-2" style="color: var(--text-secondary)">Atta</div>
+                    </div>
+                    <div class="trending-item cursor-pointer group" data-product="rice">
+                        <div class="trending-frame group-hover:opacity-80 transition-opacity">
+                            <span class="text-2xl">🍚</span>
+                        </div>
+                        <div class="text-sm mt-2" style="color: var(--text-secondary)">Rice</div>
+                    </div>
+                    <div class="trending-item cursor-pointer group" data-product="detergent">
+                        <div class="trending-frame group-hover:opacity-80 transition-opacity">
+                            <span class="text-2xl">🧴</span>
+                        </div>
+                        <div class="text-sm mt-2" style="color: var(--text-secondary)">Detergent</div>
+                    </div>
+                    <div class="trending-item cursor-pointer group" data-product="coffee">
+                        <div class="trending-frame group-hover:opacity-80 transition-opacity">
+                            <span class="text-2xl">☕</span>
+                        </div>
+                        <div class="text-sm mt-2" style="color: var(--text-secondary)">Coffee</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- LOADING PAGE -->
+        <div id="loading-page" class="hidden fixed inset-0 flex items-center justify-center"
+            style="background-color: var(--bg-primary)">
+            <div class="text-center max-w-md mx-auto px-6">
+                <!-- Website Logo -->
+                <div class="flex justify-center mb-6">
+                    <h1 class="text-4xl font-bold tracking-tight" style="color: var(--text-primary)">🛒 QuickKart</h1>
+                </div>
+
+                <!-- Main loading animation -->
+                <div class="flex items-center justify-center gap-6 mb-6">
+                    <div id="loading-logo" class="h-10 w-10 bg-purple-600 rounded flex items-center justify-center">
+                        <span class="text-white font-bold text-xs">Z</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                    <span class="font-bold text-lg" style="color: var(--text-primary)">QuickKart</span>
+                </div>
+
+                <!-- Status text -->
+                <div class="text-xl font-medium mb-2" style="color: var(--text-primary)">Comparing prices across
+                    vendors…</div>
+                <div class="text-sm mb-6" style="color: var(--text-tertiary)">Checking Zepto • Blinkit • DMart</div>
+
+                <!-- Progress bar -->
+                <div class="w-full h-1 rounded-full overflow-hidden" style="background-color: var(--bg-secondary)">
+                    <div class="h-full w-1/3 bg-teal-500 animate-[slide_1.6s_ease-in-out_infinite]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS PAGE -->
+        <div id="results-page" class="hidden min-h-screen" style="background-color: var(--bg-primary)">
+            <!-- Header -->
+            <div class="sticky top-0 border-b z-10"
+                style="background-color: var(--bg-primary); border-color: var(--border-primary)">
+                <div class="flex items-center gap-4 p-4">
+                    <button id="back-to-home" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                        <svg class="w-6 h-6" style="color: var(--text-primary)" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div class="flex-1">
+                        <h2 class="text-xl font-bold" style="color: var(--text-primary)">
+                            Results for <span id="results-query" style="color: var(--text-primary)"></span>
+                        </h2>
+                        <div class="text-sm" style="color: var(--text-tertiary)">Best prices highlighted in green</div>
+                    </div>
+                </div>
+
+                <!-- Platform filters -->
+                <div class="flex gap-3 px-4 pb-4" id="platform-filters">
+                    <button class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium transition-colors"
+                        data-platform="all">All</button>
+                    <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="zepto"
+                        style="border-color: var(--border-primary); color: var(--text-primary)">Zepto</button>
+                    <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="blinkit"
+                        style="border-color: var(--border-primary); color: var(--text-primary)">Blinkit</button>
+                    <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="dmart"
+                        style="border-color: var(--border-primary); color: var(--text-primary)">DMart</button>
+                </div>
+            </div>
+
+            <!-- Results container -->
+            <div class="p-4">
+                <div id="results-grid"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOCATION MODAL -->
+    <div id="location-modal" class="fixed inset-0 modal-overlay z-50 hidden">
+        <div class="flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-center gap-4 p-4 border-b" style="border-color: var(--border-primary)">
+                <button id="location-back" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                </button>
+                <div class="flex-1">
+                    <input id="location-search" type="text" placeholder="Search for area, street name..."
+                        class="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button id="location-close" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 p-4 overflow-y-auto">
+                <!-- Use Current Location -->
+                <button id="use-current-location"
+                    class="w-full bg-teal-600 hover:bg-teal-700 text-white py-4 px-6 rounded-lg mb-4 flex items-center justify-center gap-3 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Use Current Location
+                </button>
+
+                <!-- Clear Cached Location -->
+                <button id="clear-location-cache"
+                    class="w-full hover:opacity-80 py-3 px-6 rounded-lg mb-6 flex items-center justify-center gap-3 transition-opacity"
+                    style="background-color: var(--bg-elevated); color: var(--text-primary)">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                        </path>
+                    </svg>
+                    Clear Saved Location
+                </button>
+
+                <!-- Location suggestions -->
+                <div id="location-suggestions" class="space-y-2">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEARCH MODAL -->
+    <div id="search-modal" class="fixed inset-0 modal-overlay z-50 hidden">
+        <div class="flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-center gap-4 p-4 border-b" style="border-color: var(--border-primary)">
+                <button id="search-back" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                </button>
+                <div class="flex-1">
+                    <input id="search-input" type="text" placeholder="Search to compare prices, availability"
+                        class="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button id="search-close" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 p-4 overflow-y-auto">
+                <!-- Search suggestions -->
+                <div id="search-suggestions" class="space-y-2">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // Application state
+        let currentPage = 'home';
+        let searchResults = [];
+        let locationData = {
+            address: 'Detecting location...',
+            latitude: null,
+            longitude: null,
+            pincode: null
+        };
+
+        // Platform metadata
+        const PLATFORM_META = {
+            blinkit: { name: "Blinkit", color: "bg-yellow-500" },
+            zepto: { name: "Zepto", color: "bg-purple-500" },
+            dmart: { name: "DMart", color: "bg-green-500" }
+        };
+
+        // DOM elements
+        const elements = {
+            homePage: document.getElementById('home-page'),
+            loadingPage: document.getElementById('loading-page'),
+            resultsPage: document.getElementById('results-page'),
+            locationModal: document.getElementById('location-modal'),
+            searchModal: document.getElementById('search-modal'),
+            mainSearch: document.getElementById('main-search'),
+            userLocation: document.getElementById('user-location'),
+            recentList: document.getElementById('recent-list'),
+            resultsGrid: document.getElementById('results-grid'),
+            resultsQuery: document.getElementById('results-query')
+        };
+
+        // Location caching functions
+        function saveLocationToCache() {
+            try {
+                const locationToSave = {
+                    address: locationData.address,
+                    latitude: locationData.latitude,
+                    longitude: locationData.longitude,
+                    pincode: locationData.pincode,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('quickkart_location', JSON.stringify(locationToSave));
+            } catch (error) {
+                console.error('Failed to save location to cache:', error);
+            }
+        }
+
+        function loadLocationFromCache() {
+            try {
+                const cached = localStorage.getItem('quickkart_location');
+                if (cached) {
+                    const locationCache = JSON.parse(cached);
+                    const cacheAge = Date.now() - (locationCache.timestamp || 0);
+                    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+                    if (cacheAge < maxAge && locationCache.latitude && locationCache.longitude) {
+                        locationData.address = locationCache.address || 'Cached location';
+                        locationData.latitude = locationCache.latitude;
+                        locationData.longitude = locationCache.longitude;
+                        locationData.pincode = locationCache.pincode;
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load location from cache:', error);
+            }
+            return false;
+        }
+
+        function clearLocationCache() {
+            try {
+                localStorage.removeItem('quickkart_location');
+            } catch (error) {
+                console.error('Failed to clear location cache:', error);
+            }
+        }
+
+        // Page management
+        function showPage(page) {
+            elements.homePage.classList.add('hidden');
+            elements.loadingPage.classList.add('hidden');
+            elements.resultsPage.classList.add('hidden');
+
+            switch (page) {
+                case 'home':
+                    elements.homePage.classList.remove('hidden');
+                    break;
+                case 'loading':
+                    elements.loadingPage.classList.remove('hidden');
+                    startLoadingAnimation();
+                    break;
+                case 'results':
+                    elements.resultsPage.classList.remove('hidden');
+                    break;
+            }
+            currentPage = page;
+        }
+
+        // Modal management
+        function openLocationModal() {
+            elements.locationModal.classList.remove('hidden');
+            const locationInput = document.getElementById('location-search');
+            locationInput.value = '';
+            locationInput.focus();
+
+            // Initialize Google Places if not already done
+            if (!placesAutocomplete) {
+                initializeGooglePlaces();
+                placesAutocomplete = true; // Mark as initialized
+            }
+        }
+
+        function closeLocationModal() {
+            elements.locationModal.classList.add('hidden');
+        }
+
+        function openSearchModal() {
+            elements.searchModal.classList.remove('hidden');
+            document.getElementById('search-input').focus();
+            populateSearchSuggestions();
+        }
+
+        function closeSearchModal() {
+            elements.searchModal.classList.add('hidden');
+        }
+
+        // Search functionality
+        async function performSearch(query) {
+            if (!query.trim()) return;
+
+            addToRecent(query);
+            elements.resultsQuery.textContent = `"${query}"`;
+            showPage('loading');
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: query,
+                        ...locationData
+                    })
+                });
+
+                if (response.ok) {
+                    searchResults = await response.json();
+                } else {
+                    throw new Error('Search failed');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                searchResults = [];
+            }
+
+            setTimeout(() => {
+                lastResults = searchResults;
+                activePlatform = 'all';
+                renderResults(searchResults);
+                filterPlatform('all');
+                showPage('results');
+            }, 2000);
+        }
+
+        // Recent searches
+        function addToRecent(query) {
+            let recent = JSON.parse(localStorage.getItem('recent_searches') || '[]');
+            recent = recent.filter(item => item !== query);
+            recent.unshift(query);
+            recent = recent.slice(0, 5);
+            localStorage.setItem('recent_searches', JSON.stringify(recent));
+            renderRecentSearches();
+        }
+
+        function renderRecentSearches() {
+            const recent = JSON.parse(localStorage.getItem('recent_searches') || '[]');
+            elements.recentList.innerHTML = recent.map(query => `
+                <div class="recent-chip cursor-pointer hover:opacity-80 transition-opacity" data-query="${query}">
+                    <svg class="w-4 h-4" style="color: var(--text-tertiary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"></path>
+                    </svg>
+                    <span>${query}</span>
+                    <button class="remove-recent ml-2 hover:opacity-80" style="color: var(--text-tertiary)" data-query="${query}">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Search suggestions
+        function populateSearchSuggestions(query = '') {
+            const suggestions = generateSmartSuggestions(query);
+
+            if (suggestions.length === 0) {
+                document.getElementById('search-suggestions').innerHTML = `
+                    <div class="p-6 text-center" style="color: var(--text-tertiary)">
+                        <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"></path>
+                        </svg>
+                        <div class="text-sm">${query ? 'No matching suggestions found.' : 'Start typing to see suggestions'}</div>
+                    </div>
+                `;
+                return;
+            }
+
+            document.getElementById('search-suggestions').innerHTML = suggestions.map(suggestion => `
+                <div class="search-suggestion p-4 rounded-lg cursor-pointer flex items-center gap-3 hover:opacity-80 transition-opacity" data-query="${suggestion}">
+                    <svg class="w-5 h-5" style="color: var(--text-secondary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <span style="color: var(--text-primary)">${suggestion}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateSmartSuggestions(query) {
+            const staticSuggestions = [
+                "Atta", "Rice", "Detergent", "Coffee", "Milk", "Bread",
+                "Eggs", "Oil", "Sugar", "Tea", "Biscuits", "Soap"
+            ];
+
+            if (!query || query.trim().length === 0) {
+                return staticSuggestions.slice(0, 6);
+            }
+
+            const queryLower = query.toLowerCase().trim();
+            return staticSuggestions.filter(item =>
+                item.toLowerCase().includes(queryLower)
+            ).slice(0, 8);
+        }
+
+        // Google Places functionality
+        let placesAutocomplete = null;
+
+        function initializeGooglePlaces() {
+            if (window.google && google.maps && google.maps.places) {
+                const autocompleteService = new google.maps.places.AutocompleteService();
+
+                // Handle location search input
+                const locationInput = document.getElementById('location-search');
+                let searchTimeout;
+
+                locationInput.addEventListener('input', (e) => {
+                    const query = e.target.value.trim();
+
+                    // Clear previous timeout
+                    if (searchTimeout) {
+                        clearTimeout(searchTimeout);
+                    }
+
+                    if (query.length > 2) {
+                        // Debounce the search
+                        searchTimeout = setTimeout(() => {
+                            searchPlaces(query);
+                        }, 300);
+                    } else {
+                        clearLocationSuggestions();
+                    }
+                });
+            }
+        }
+
+        function searchPlaces(query) {
+            if (window.google && google.maps && google.maps.places) {
+                const autocompleteService = new google.maps.places.AutocompleteService();
+
+                autocompleteService.getPlacePredictions({
+                    input: query,
+                    componentRestrictions: { country: 'IN' },
+                    types: ['geocode']
+                }, (predictions, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                        displayLocationSuggestions(predictions);
+                    } else {
+                        clearLocationSuggestions();
+                    }
+                });
+            }
+        }
+
+        function displayLocationSuggestions(predictions) {
+            const suggestionsContainer = document.getElementById('location-suggestions');
+            suggestionsContainer.innerHTML = predictions.slice(0, 5).map(prediction => `
+                <div class="location-suggestion p-4 rounded-lg cursor-pointer hover:opacity-80 transition-opacity" 
+                     data-place-id="${prediction.place_id}">
+                    <div class="font-medium" style="color: var(--text-primary)">${prediction.structured_formatting.main_text}</div>
+                    <div class="text-sm" style="color: var(--text-secondary)">${prediction.structured_formatting.secondary_text || ''}</div>
+                </div>
+            `).join('');
+        }
+
+        function clearLocationSuggestions() {
+            document.getElementById('location-suggestions').innerHTML = '';
+        }
+
+        function selectLocationFromPlaceId(placeId) {
+            if (window.google && google.maps && google.maps.places) {
+                const placesService = new google.maps.places.PlacesService(document.createElement('div'));
+
+                placesService.getDetails({
+                    placeId: placeId,
+                    fields: ['address_components', 'formatted_address', 'geometry']
+                }, (place, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+                        updateLocationFromPlace(place);
+                        closeLocationModal();
+                    }
+                });
+            }
+        }
+
+        function updateLocationFromPlace(place) {
+            locationData.latitude = place.geometry.location.lat();
+            locationData.longitude = place.geometry.location.lng();
+            locationData.address = place.formatted_address;
+
+            // Extract pincode
+            const addressComponents = place.address_components || [];
+            const pincodeComponent = addressComponents.find(component =>
+                component.types.includes('postal_code')
+            );
+            locationData.pincode = pincodeComponent ? pincodeComponent.long_name : '';
+
+            console.log('📍 Extracted pincode from Google Places:', locationData.pincode);
+            updateLocationDisplay();
+        }
+
+        // Location functionality
+        function detectCurrentLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by this browser.');
+                return;
+            }
+
+            elements.userLocation.textContent = '📍 Detecting location...';
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    locationData.latitude = position.coords.latitude;
+                    locationData.longitude = position.coords.longitude;
+
+                    if (window.google && google.maps) {
+                        const geocoder = new google.maps.Geocoder();
+                        const latlng = {
+                            lat: locationData.latitude,
+                            lng: locationData.longitude
+                        };
+
+                        geocoder.geocode({ location: latlng }, (results, status) => {
+                            if (status === 'OK' && results[0]) {
+                                locationData.address = results[0].formatted_address;
+                                const addressComponents = results[0].address_components || [];
+                                const pincodeComponent = addressComponents.find(component =>
+                                    component.types.includes('postal_code')
+                                );
+                                locationData.pincode = pincodeComponent ? pincodeComponent.long_name : '';
+                                updateLocationDisplay();
+                            } else {
+                                locationData.address = 'Location detected';
+                                updateLocationDisplay();
+                            }
+                        });
+                    } else {
+                        locationData.address = 'Location detected';
+                        updateLocationDisplay();
+                    }
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    locationData.address = 'Kothrud, Pune (Default)';
+                    locationData.latitude = 18.5204;
+                    locationData.longitude = 73.8567;
+                    locationData.pincode = '411038';
+                    updateLocationDisplay();
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+            );
+        }
+
+        function updateLocationDisplay() {
+            elements.userLocation.textContent = locationData.address;
+            saveLocationToCache();
+            fetchETAs();
+        }
+
+        // ETA functionality
+        function formatETA(eta, platformName) {
+            if (!eta || eta === 'N/A') {
+                return 'Unavailable';
+            }
+
+            if (platformName === 'dmart') {
+                if (eta.toLowerCase().includes('tomorrow')) {
+                    const timeMatch = eta.match(/(\d{1,2}):(\d{2})\s*([AP]M)\s*-\s*(\d{1,2}):(\d{2})\s*([AP]M)/i);
+                    if (timeMatch) {
+                        const startHour = timeMatch[1];
+                        const endHour = timeMatch[4];
+                        const endPeriod = timeMatch[6];
+                        return `Tomorrow\n${startHour} to ${endHour} ${endPeriod}`;
+                    }
+                    return 'Tomorrow';
+                }
+
+                if (eta.toLowerCase().includes('today')) {
+                    const timeMatch = eta.match(/(\d{1,2}):(\d{2})\s*([AP]M)\s*-\s*(\d{1,2}):(\d{2})\s*([AP]M)/i);
+                    if (timeMatch) {
+                        const startHour = timeMatch[1];
+                        const endHour = timeMatch[4];
+                        const endPeriod = timeMatch[6];
+                        return `Today\n${startHour} to ${endHour} ${endPeriod}`;
+                    }
+                    return 'Today';
+                }
+            }
+
+            return eta;
+        }
+
+        async function fetchETAs() {
+            if (!locationData.latitude || !locationData.longitude) {
+                return;
+            }
+
+            document.getElementById('eta-blinkit').textContent = 'Loading...';
+            document.getElementById('eta-zepto').textContent = 'Loading...';
+            document.getElementById('eta-dmart').textContent = 'Loading...';
+
+            try {
+                const response = await fetch('/eta', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(locationData)
+                });
+
+                if (response.ok) {
+                    const etaData = await response.json();
+                    document.getElementById('eta-blinkit').textContent = formatETA(etaData.blinkit, 'blinkit');
+                    document.getElementById('eta-zepto').textContent = formatETA(etaData.zepto, 'zepto');
+                    document.getElementById('eta-dmart').textContent = formatETA(etaData.dmart, 'dmart');
+                } else {
+                    throw new Error('ETA fetch failed');
+                }
+            } catch (error) {
+                console.error('ETA fetch error:', error);
+                document.getElementById('eta-blinkit').textContent = formatETA(null, 'blinkit');
+                document.getElementById('eta-zepto').textContent = formatETA(null, 'zepto');
+                document.getElementById('eta-dmart').textContent = formatETA(null, 'dmart');
+            }
+        }
+
+        // Results rendering
+        function renderResults(results) {
+            if (!results || results.length === 0) {
+                elements.resultsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <svg class="w-16 h-16 mx-auto mb-4" style="color: var(--text-tertiary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7"></path>
+                        </svg>
+                        <p class="text-lg" style="color: var(--text-tertiary)">No products found</p>
+                        <p class="text-sm mt-2" style="color: var(--text-tertiary)">Try a different search term</p>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.resultsGrid.innerHTML = results.map(product => {
+                const img = product.image_url
+                    ? `<img src="${product.image_url}" alt="${product.name}" class="h-32 w-auto object-contain mx-auto" onerror="this.style.display='none';" />`
+                    : `<div class="h-32 w-32 rounded-lg mx-auto flex items-center justify-center" style="background-color: var(--bg-secondary)">
+                         <svg class="w-8 h-8" style="color: var(--text-tertiary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                         </svg>
+                       </div>`;
+
+                const name = product.name || "Unnamed Product";
+                const quantity = product.quantity || "N/A";
+
+                const prices = (product.platforms || []).map(p => {
+                    const priceStr = p.price || "0";
+                    const numericPrice = parseFloat(priceStr.replace(/[^\d.]/g, ''));
+                    return { ...p, numericPrice };
+                }).filter(p => p.numericPrice > 0);
+
+                const cheapestPrice = prices.length > 0 ? Math.min(...prices.map(p => p.numericPrice)) : 0;
+
+                const platformRows = (product.platforms || []).map(p => {
+                    const key = (p.platform || "").toLowerCase();
+                    const meta = PLATFORM_META[key] || { name: p.platform, color: "bg-gray-500" };
+                    const price = p.price || "N/A";
+                    const numericPrice = parseFloat((p.price || "0").replace(/[^\d.]/g, ''));
+                    const isCheapest = numericPrice > 0 && numericPrice === cheapestPrice;
+
+                    let eta = "N/A";
+                    if (key === "blinkit") {
+                        eta = document.getElementById("eta-blinkit")?.textContent || "N/A";
+                    } else if (key === "zepto") {
+                        eta = document.getElementById("eta-zepto")?.textContent || "N/A";
+                    } else if (key === "dmart") {
+                        eta = document.getElementById("eta-dmart")?.textContent || "N/A";
+                    }
+
+                    const stockStatus = p.in_stock !== false ? "" : `<span class="ml-2 text-xs text-red-400">Out of Stock</span>`;
+                    const priceColor = isCheapest ? "text-green-400 font-bold" : "font-semibold";
+
+                    return `
+                        <a href="${p.product_url || "#"}" target="_blank" rel="noopener noreferrer"
+                           class="flex justify-between items-center rounded-lg px-3 py-3 border hover:opacity-80 transition-opacity"
+                           style="background-color: var(--bg-elevated); border-color: var(--border-primary)">
+                            <div class="flex items-center gap-2">
+                                <div class="overflow-hidden rounded-lg w-16 h-8 flex items-center justify-center ${meta.color}">
+                                    <span class="text-white font-bold text-xs">${meta.name}</span>
+                                </div>
+                                ${stockStatus}
+                            </div>
+                            <div class="text-right">
+                                <div class="${priceColor}" style="color: ${isCheapest ? '#22c55e' : 'var(--text-primary)'}">${price}</div>
+                                <div class="text-xs" style="color: var(--text-tertiary)">${eta}</div>
+                            </div>
+                        </a>
+                    `;
+                }).join("");
+
+                return `
+                    <div class="rounded-2xl border p-4 flex flex-col gap-4 hover:opacity-90 transition-opacity"
+                         style="background-color: var(--bg-elevated); border-color: var(--border-primary)">
+                        <div class="flex justify-center items-center rounded-lg p-4" style="background-color: var(--bg-secondary)">
+                            ${img}
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold leading-snug mb-1" style="color: var(--text-primary)">${name}</h3>
+                            <p class="text-sm" style="color: var(--text-secondary)">${quantity}</p>
+                        </div>
+                        <div class="space-y-2 flex-1">${platformRows}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Platform filtering
+        let lastResults = [];
+        let activePlatform = 'all';
+
+        function filterPlatform(platform) {
+            activePlatform = platform;
+
+            document.querySelectorAll("#platform-filters button").forEach(btn => {
+                if (btn.dataset.platform === 'all') {
+                    btn.classList.remove("bg-blue-600", "text-white");
+                    btn.classList.add("border");
+                    btn.style.borderColor = "var(--border-primary)";
+                    btn.style.color = "var(--text-primary)";
+                } else {
+                    btn.classList.remove("border-blue-500");
+                    btn.classList.add("border");
+                    btn.style.borderColor = "var(--border-primary)";
+                }
+            });
+
+            const activeBtn = document.querySelector(`#platform-filters button[data-platform="${platform}"]`);
+            if (activeBtn) {
+                if (platform === 'all') {
+                    activeBtn.classList.remove("border");
+                    activeBtn.classList.add("bg-blue-600", "text-white");
+                    activeBtn.style.borderColor = "";
+                    activeBtn.style.color = "";
+                } else {
+                    activeBtn.classList.remove("border");
+                    activeBtn.style.borderColor = "#3b82f6";
+                    activeBtn.style.color = "#3b82f6";
+                }
+            }
+
+            if (platform === "all") {
+                renderResults(lastResults);
+            } else {
+                const filteredResults = lastResults.filter(product => {
+                    return (product.platforms || []).some(p => {
+                        const platformName = (p.platform || "").toLowerCase();
+                        return platformName === platform;
+                    });
+                });
+                renderResults(filteredResults);
+            }
+        }
+
+        // Loading animation
+        function startLoadingAnimation() {
+            const logos = [
+                { color: 'bg-purple-600', text: 'Z' },
+                { color: 'bg-yellow-400', text: 'B' },
+                { color: 'bg-green-500', text: 'D' }
+            ];
+            let index = 0;
+
+            const interval = setInterval(() => {
+                const logoElement = document.getElementById('loading-logo');
+                if (logoElement) {
+                    logoElement.className = `h-10 w-10 ${logos[index].color} rounded flex items-center justify-center`;
+                    logoElement.innerHTML = `<span class="text-white font-bold text-xs">${logos[index].text}</span>`;
+                    index = (index + 1) % logos.length;
+                }
+            }, 1200);
+
+            setTimeout(() => clearInterval(interval), 15000);
+            return interval;
+        }
+
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+
+            if (isDark) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+
+            updateThemeIcon(!isDark);
+        }
+
+        function updateThemeIcon(isDark) {
+            const themeButton = document.getElementById('theme-toggle');
+            const icon = isDark
+                ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                   </svg>`
+                : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1M12 20v1M4.2 4.2l.7.7M18.1 18.1l.7.7M1 12h1M22 12h1M4.2 19.8l.7-.7M18.1 5.9l.7-.7M12 7a5 5 0 100 10 5 5 0 000-10z"></path>
+                   </svg>`;
+            themeButton.innerHTML = icon;
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+
+            if (shouldBeDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+
+            updateThemeIcon(shouldBeDark);
+        }
+
+        // Google Maps API loading
+        async function loadGoogleMapsAPI() {
+            try {
+                const response = await fetch('/config');
+                const config = await response.json();
+
+                if (config.maps_api_key) {
+                    const script = document.getElementById('google-maps-script');
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${config.maps_api_key}&libraries=places&callback=initializeLocation`;
+                } else {
+                    console.warn('Google Maps API key not found');
+                    setTimeout(() => {
+                        if (!loadLocationFromCache()) {
+                            detectCurrentLocation();
+                        } else {
+                            updateLocationDisplay();
+                        }
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Failed to load Google Maps API:', error);
+                setTimeout(() => {
+                    if (!loadLocationFromCache()) {
+                        detectCurrentLocation();
+                    } else {
+                        updateLocationDisplay();
+                    }
+                }, 1000);
+            }
+        }
+
+        // Initialize location
+        function initializeLocation() {
+            if (loadLocationFromCache()) {
+                updateLocationDisplay();
+            } else {
+                detectCurrentLocation();
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeTheme();
+
+            // Main search click
+            elements.mainSearch.addEventListener('click', openSearchModal);
+
+            // Location click
+            elements.userLocation.addEventListener('click', openLocationModal);
+
+            // Theme toggle
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+            // Modal close buttons
+            document.getElementById('location-back').addEventListener('click', closeLocationModal);
+            document.getElementById('location-close').addEventListener('click', closeLocationModal);
+            document.getElementById('search-back').addEventListener('click', closeSearchModal);
+            document.getElementById('search-close').addEventListener('click', closeSearchModal);
+
+            // Use current location
+            document.getElementById('use-current-location').addEventListener('click', () => {
+                closeLocationModal();
+                detectCurrentLocation();
+            });
+
+            // Clear location cache
+            document.getElementById('clear-location-cache').addEventListener('click', () => {
+                clearLocationCache();
+                locationData.address = 'Detecting location...';
+                locationData.latitude = null;
+                locationData.longitude = null;
+                locationData.pincode = null;
+                elements.userLocation.textContent = locationData.address;
+                closeLocationModal();
+                detectCurrentLocation();
+            });
+
+            // Search input
+            document.getElementById('search-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const query = e.target.value.trim();
+                    if (query) {
+                        closeSearchModal();
+                        performSearch(query);
+                    }
+                }
+            });
+
+            // Search input for suggestions with debouncing
+            let searchTimeout;
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    populateSearchSuggestions(e.target.value);
+                }, 150);
+            });
+
+            // Location search input handling
+            document.getElementById('location-search').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const address = e.target.value.trim();
+                    if (address) {
+                        // If Places API didn't handle it, do manual geocoding
+                        if (window.google && google.maps) {
+                            const geocoder = new google.maps.Geocoder();
+                            geocoder.geocode({ address: address }, (results, status) => {
+                                if (status === 'OK' && results[0]) {
+                                    updateLocationFromPlace(results[0]);
+                                    closeLocationModal();
+                                } else {
+                                    // Fallback to manual entry
+                                    locationData.address = address;
+                                    updateLocationDisplay();
+                                    closeLocationModal();
+                                }
+                            });
+                        } else {
+                            // No Google Maps, just use the entered address
+                            locationData.address = address;
+                            updateLocationDisplay();
+                            closeLocationModal();
+                        }
+                    }
+                }
+            });
+
+            // Back to home
+            document.getElementById('back-to-home').addEventListener('click', () => showPage('home'));
+
+            // Clear recent searches
+            document.getElementById('clear-recent').addEventListener('click', () => {
+                localStorage.removeItem('recent_searches');
+                renderRecentSearches();
+            });
+
+            // Trending items
+            document.querySelectorAll('.trending-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const product = item.dataset.product;
+                    performSearch(product);
+                });
+            });
+
+            // Platform filter buttons
+            document.querySelectorAll('#platform-filters button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const platform = button.dataset.platform;
+                    filterPlatform(platform);
+                });
+            });
+
+            // Delegate event listeners for dynamic content
+            document.addEventListener('click', (e) => {
+                // Recent search clicks
+                if (e.target.closest('.recent-chip') && !e.target.classList.contains('remove-recent')) {
+                    const query = e.target.closest('.recent-chip').dataset.query;
+                    performSearch(query);
+                }
+
+                // Remove recent search
+                if (e.target.classList.contains('remove-recent')) {
+                    e.stopPropagation();
+                    const query = e.target.dataset.query;
+                    let recent = JSON.parse(localStorage.getItem('recent_searches') || '[]');
+                    recent = recent.filter(item => item !== query);
+                    localStorage.setItem('recent_searches', JSON.stringify(recent));
+                    renderRecentSearches();
+                }
+
+                // Search suggestions
+                if (e.target.closest('.search-suggestion')) {
+                    const query = e.target.closest('.search-suggestion').dataset.query;
+                    closeSearchModal();
+                    performSearch(query);
+                }
+
+                // Location suggestions
+                if (e.target.closest('.location-suggestion')) {
+                    const suggestionElement = e.target.closest('.location-suggestion');
+                    const placeId = suggestionElement.dataset.placeId;
+                    if (placeId) {
+                        selectLocationFromPlaceId(placeId);
+                    }
+                }
+            });
+
+            // Initialize
+            renderRecentSearches();
+            showPage('home');
+            loadGoogleMapsAPI();
+        });
+
+        // Google Maps callback
+        window.initializeLocation = initializeLocation;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,18 @@
+# Caches and user junk
+__pycache__/
+*.py[cod]
+*.log
+
+# Local environment
+.venv/
+*.env
+*test.py
+*.gitignore/
+*.vscode/
+*product.db
+
+
+# Browser/user data
+blinkit_desktop_profile/
+desktop_user_data/
+user_data*/

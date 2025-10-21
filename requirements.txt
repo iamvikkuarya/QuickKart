@@ -1,0 +1,7 @@
+Flask
+python-dotenv
+playwright
+requests
+pytest
+beautifulsoup4
+rapidfuzz
