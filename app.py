@@ -197,9 +197,17 @@ def search():
     return jsonify(merged_results)
 
 # --------------------------------------------------------------------------------------
+@app.route('/health')
+def health():
+    """Health check endpoint"""
+    return jsonify({"status": "healthy", "timestamp": time.time()}), 200
+
 @app.route('/')
 def home():
     return app.send_static_file('index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # For local development
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_ENV") != "production"
+    app.run(debug=debug, host="0.0.0.0", port=port)

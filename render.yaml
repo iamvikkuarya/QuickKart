@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: quickkart
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false  # You'll set this in Render dashboard
