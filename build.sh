@@ -3,12 +3,16 @@
 
 set -e
 
+echo "📦 Installing system dependencies..."
+apt-get update
+apt-get install -y wget gnupg ca-certificates
+
 echo "📦 Installing Python dependencies..."
 pip install -r requirements.txt
 
-echo "🌐 Installing Playwright browsers..."
-playwright install chromium
-playwright install-deps chromium
+echo "🌐 Installing Playwright browsers with system dependencies..."
+export PLAYWRIGHT_BROWSERS_PATH=/opt/render/.cache/ms-playwright
+playwright install --with-deps chromium
 
 echo "🔧 Initializing database..."
 python -c "
