@@ -52,23 +52,23 @@ RUN mkdir -p static/css static/js static/assets
 # Create a non-root user for security
 RUN useradd -m -u 1000 appuser
 
-# Set proper permissions for playwright cache
-RUN mkdir -p /home/appuser/.cache && chown -R appuser:appuser /home/appuser/.cache
+# Set proper permissions for playwright cache and browsers
+RUN mkdir -p /home/appuser/.cache/ms-playwright && chown -R appuser:appuser /home/appuser/.cache
 
 # Change ownership of app directory
 RUN chown -R appuser:appuser /app
+
+# Copy the playwright browsers from root cache to user cache
+RUN cp -r /root/.cache/ms-playwright/* /home/appuser/.cache/ms-playwright/ && \
+    chown -R appuser:appuser /home/appuser/.cache/ms-playwright
 
 # Set environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Switch to non-root user
 USER appuser
-
-# Install browsers again as the appuser to ensure proper permissions
-RUN playwright install chromium
 
 # Run the application (Railway expects to use PORT env var)
 CMD ["sh", "-c", "python -c \"import os; from app import app; app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))\""]
