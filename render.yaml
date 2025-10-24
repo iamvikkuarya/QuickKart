@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: quickkart
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: singapore
+    branch: deployment
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PYTHONPATH
+        value: /app
+    healthCheckPath: /
+    autoDeploy: true

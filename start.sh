@@ -13,7 +13,7 @@ else:
     print('📦 Database already exists')
 "
 
-# Start Gunicorn with proper port handling
-PORT=${PORT:-5000}
+# Start Gunicorn with proper port handling (Render uses port 10000)
+PORT=${PORT:-10000}
 echo "🚀 Starting Gunicorn on port $PORT"
-exec gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile - app:app
+exec gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120 --keep-alive 2 --max-requests 1000 --access-logfile - --error-logfile - app:app

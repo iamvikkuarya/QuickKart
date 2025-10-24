@@ -69,6 +69,10 @@ RUN chmod +x start.sh && chown appuser:appuser start.sh
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app
+ENV PORT=10000
+
+# Expose port for Render
+EXPOSE 10000
 
 # Switch to non-root user
 USER appuser
