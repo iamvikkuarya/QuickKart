@@ -70,5 +70,5 @@ ENV PYTHONPATH=/app
 # Switch to non-root user
 USER appuser
 
-# Run the application (Railway expects to use PORT env var)
-CMD ["sh", "-c", "python -c \"import os; from app import app; app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))\""]
+# Run the application with Gunicorn (production WSGI server)
+CMD ["sh", "-c", "python -c \"from src.core.db import init_db; import os; init_db() if not os.path.exists('product.db') else None\" && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app"]
