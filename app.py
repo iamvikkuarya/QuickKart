@@ -136,6 +136,43 @@ def eta():
     eta_cache[eta_key] = (time.time(), out)
     return jsonify(out)
 
+# Individual ETA endpoints for real-time updates
+@app.route('/eta/blinkit', methods=['POST'])
+def eta_blinkit():
+    data = request.get_json() or {}
+    address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
+    
+    try:
+        eta = get_blinkit_eta(address)
+        return jsonify({"eta": eta or "N/A", "platform": "blinkit"})
+    except Exception as e:
+        print("ETA blinkit error:", e)
+        return jsonify({"eta": "N/A", "platform": "blinkit"})
+
+@app.route('/eta/zepto', methods=['POST'])
+def eta_zepto():
+    data = request.get_json() or {}
+    address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
+    
+    try:
+        eta = get_zepto_eta(address)
+        return jsonify({"eta": eta or "N/A", "platform": "zepto"})
+    except Exception as e:
+        print("ETA zepto error:", e)
+        return jsonify({"eta": "N/A", "platform": "zepto"})
+
+@app.route('/eta/dmart', methods=['POST'])
+def eta_dmart():
+    data = request.get_json() or {}
+    pincode = (data.get('pincode') or "").strip() or "411038"
+    
+    try:
+        eta = get_dmart_eta(pincode)
+        return jsonify({"eta": eta or "N/A", "platform": "dmart"})
+    except Exception as e:
+        print("ETA dmart error:", e)
+        return jsonify({"eta": "N/A", "platform": "dmart"})
+
 # --------------------------------------------------------------------------------------
 #                                 /search
 # --------------------------------------------------------------------------------------
