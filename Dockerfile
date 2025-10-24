@@ -62,6 +62,9 @@ RUN chown -R appuser:appuser /app
 RUN cp -r /root/.cache/ms-playwright/* /home/appuser/.cache/ms-playwright/ && \
     chown -R appuser:appuser /home/appuser/.cache/ms-playwright
 
+# Make startup script executable and set ownership
+RUN chmod +x start.sh && chown appuser:appuser start.sh
+
 # Set environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
@@ -70,5 +73,5 @@ ENV PYTHONPATH=/app
 # Switch to non-root user
 USER appuser
 
-# Run the application with Gunicorn (production WSGI server)
-CMD ["sh", "-c", "python -c \"from src.core.db import init_db; import os; init_db() if not os.path.exists('product.db') else None\" && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app"]
+# Run the application with startup script
+CMD ["./start.sh"]

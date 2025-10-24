@@ -2,7 +2,7 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "python -c \"from src.core.db import init_db; import os; init_db() if not os.path.exists('product.db') else None\" && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app"
+startCommand = "./start.sh"
 healthcheckPath = "/"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
