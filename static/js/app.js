@@ -12,7 +12,7 @@ let locationData = {
 
 // Platform metadata
 const PLATFORM_META = {
-    blinkit: { name: "Blinkit", color: "bg-yellow-500", logo: "static/assets/blinkit_logo.webp" },
+    blinkit: { name: "Blinkit", color: "bg-yellow-500", logo: "static/assets/Blinkit_logo.webp" },
     zepto: { name: "Zepto", color: "bg-purple-500", logo: "static/assets/zepto_logo.webp" },
     dmart: { name: "DMart", color: "bg-green-500", logo: "static/assets/Dmart_logo.webp" }
 };
@@ -631,7 +631,7 @@ function filterPlatform(platform) {
 function startLoadingAnimation() {
     const logos = [
         { src: 'static/assets/zepto_logo.webp', alt: 'Zepto' },
-        { src: 'static/assets/blinkit_logo.webp', alt: 'Blinkit' },
+        { src: 'static/assets/Blinkit_logo.webp', alt: 'Blinkit' },
         { src: 'static/assets/Dmart_logo.webp', alt: 'DMart' }
     ];
     let index = 0;
