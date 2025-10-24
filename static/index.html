@@ -10,19 +10,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        'primary': {
-                            50: '#f8fafc',
-                            100: '#f1f5f9',
-                            500: '#64748b',
-                            900: '#0f172a'
-                        }
-                    }
-                }
-            }
+            darkMode: 'class'
         };
     </script>
 
@@ -37,7 +25,7 @@
     <!-- MAIN CONTAINER -->
     <div class="min-h-screen">
         <!-- HEADER -->
-        <header class="px-4 py-4">
+        <header class="px-4 sm:px-6 md:px-8 lg:px-12 py-4 max-w-4xl mx-auto">
             <!-- Website Logo -->
             <div class="flex justify-center mb-4">
                 <a href="/" class="cursor-pointer">
@@ -87,41 +75,38 @@
         </header>
 
         <!-- MAIN CONTENT -->
-        <main id="home-page" class="px-4">
+        <main id="home-page" class="px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl mx-auto">
             <!-- Vendor Pills -->
-            <section class="mb-6">
-                <div class="glass-panel rounded-lg p-4">
-                    <div class="text-sm mb-3" style="color: var(--text-secondary)">Delivering in</div>
-                    <div class="flex gap-4 items-center">
-                        <a href="https://www.zeptonow.com/" target="_blank" rel="noopener noreferrer"
-                            class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
-                            data-platform="zepto">
-                            <div class="eta-pill" id="eta-zepto">Loading...</div>
-                            <div class="logo-container">
-                                <img src="static/assets/zepto_logo.webp" alt="Zepto"
-                                    class="w-full h-full object-contain" onerror="this.style.display='none';">
-                            </div>
-                        </a>
-                        <a href="https://blinkit.com/" target="_blank" rel="noopener noreferrer"
-                            class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
-                            data-platform="blinkit">
-                            <div class="eta-pill" id="eta-blinkit">Loading...</div>
-                            <div class="logo-container">
-                                <img src="static/assets/blinkit_logo.webp" alt="Blinkit"
-                                    class="w-full h-full object-contain" onerror="this.style.display='none';">
-                            </div>
-                        </a>
-                        <a href="https://www.dmart.in/" target="_blank" rel="noopener noreferrer"
-                            class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity"
-                            data-platform="dmart">
-                            <div class="eta-pill" id="eta-dmart">Loading...</div>
-                            <div class="logo-container">
-                                <img src="static/assets/Dmart_logo.webp" alt="DMart"
-                                    class="w-full h-full object-contain" onerror="this.style.display='none';">
-                            </div>
-                        </a>
-                    </div>
+            <section class="mb-6"></section>
+            <div class="glass-panel rounded-lg p-4">
+                <div class="text-sm mb-3" style="color: var(--text-secondary)">Delivering in</div>
+                <div class="flex gap-4 items-center">
+                    <a href="https://www.zeptonow.com/" target="_blank" rel="noopener noreferrer"
+                        class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity" data-platform="zepto">
+                        <div class="eta-pill" id="eta-zepto">Loading...</div>
+                        <div class="logo-container">
+                            <img src="static/assets/zepto_logo.webp" alt="Zepto" class="w-full h-full object-contain"
+                                onerror="this.style.display='none';">
+                        </div>
+                    </a>
+                    <a href="https://blinkit.com/" target="_blank" rel="noopener noreferrer"
+                        class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity" data-platform="blinkit">
+                        <div class="eta-pill" id="eta-blinkit">Loading...</div>
+                        <div class="logo-container">
+                            <img src="static/assets/blinkit_logo.webp" alt="Blinkit"
+                                class="w-full h-full object-contain" onerror="this.style.display='none';">
+                        </div>
+                    </a>
+                    <a href="https://www.dmart.in/" target="_blank" rel="noopener noreferrer"
+                        class="vendor-pill cursor-pointer hover:opacity-80 transition-opacity" data-platform="dmart">
+                        <div class="eta-pill" id="eta-dmart">Loading...</div>
+                        <div class="logo-container">
+                            <img src="static/assets/Dmart_logo.webp" alt="DMart" class="w-full h-full object-contain"
+                                onerror="this.style.display='none';">
+                        </div>
+                    </a>
                 </div>
+            </div>
             </section>
 
             <!-- Recent Search -->
@@ -180,7 +165,7 @@
         <!-- LOADING PAGE -->
         <div id="loading-page" class="hidden fixed inset-0 flex items-center justify-center"
             style="background-color: var(--bg-primary)">
-            <div class="text-center max-w-md mx-auto px-6">
+            <div class="text-center max-w-md mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
                 <!-- Website Logo -->
                 <div class="flex justify-center mb-6">
                     <h1 class="text-4xl font-bold tracking-tight" style="color: var(--text-primary)">🛒 QuickKart</h1>
@@ -188,9 +173,9 @@
 
                 <!-- Main loading animation -->
                 <div class="flex items-center justify-center gap-6 mb-6">
-                    <div id="loading-logo" class="h-10 w-10 rounded flex items-center justify-center">
+                    <div id="loading-logo" class="logo-container">
                         <img id="loading-logo-img" src="static/assets/zepto_logo.webp" alt="Platform Logo"
-                            class="w-full h-full object-contain" onerror="this.style.display='none';">
+                            class="w-full h-full object-cover" onerror="this.style.display='none';">
                     </div>
                     <div class="flex gap-2">
                         <div class="loading-dot"></div>
@@ -222,7 +207,7 @@
             <!-- Header -->
             <div class="sticky top-0 border-b z-10"
                 style="background-color: var(--bg-primary); border-color: var(--border-primary)">
-                <div class="flex items-center gap-4 p-4">
+                <div class="flex items-center gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-4 max-w-4xl mx-auto">
                     <button id="back-to-home" class="p-2 rounded-full hover:opacity-80 transition-opacity">
                         <svg class="w-6 h-6" style="color: var(--text-primary)" fill="none" stroke="currentColor"
                             viewBox="0 0 24 24">
@@ -237,123 +222,126 @@
                         <div class="text-sm" style="color: var(--text-tertiary)">Best prices highlighted in green</div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Platform filters -->
-                <div class="flex gap-3 px-4 pb-4" id="platform-filters">
-                    <button class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium transition-colors"
-                        data-platform="all">All</button>
-                    <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="zepto"
-                        style="border-color: var(--border-primary); color: var(--text-primary)">Zepto</button>
-                    <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="blinkit"
-                        style="border-color: var(--border-primary); color: var(--text-primary)">Blinkit</button>
-                    <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="dmart"
-                        style="border-color: var(--border-primary); color: var(--text-primary)">DMart</button>
-                </div>
+            <!-- Platform filters -->
+            <div class="flex gap-3 px-4 sm:px-6 md:px-8 lg:px-12 pb-4 max-w-4xl mx-auto" id="platform-filters">
+                <button class="px-4 py-2 rounded-full bg-blue-600 text-white text-sm font-medium transition-colors"
+                    data-platform="all">All</button>
+                <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="zepto"
+                    style="border-color: var(--border-primary); color: var(--text-primary)">Zepto</button>
+                <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="blinkit"
+                    style="border-color: var(--border-primary); color: var(--text-primary)">Blinkit</button>
+                <button class="px-4 py-2 rounded-full border text-sm transition-colors" data-platform="dmart"
+                    style="border-color: var(--border-primary); color: var(--text-primary)">DMart</button>
             </div>
 
             <!-- Results container -->
-            <div class="p-4">
+            <div class="px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl mx-auto">
                 <div id="results-grid"
-                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto">
+                    class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
                     <!-- Results will be populated here -->
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- LOCATION MODAL -->
-    <div id="location-modal" class="fixed inset-0 modal-overlay z-50 hidden">
-        <div class="flex flex-col h-full">
-            <!-- Header -->
-            <div class="flex items-center gap-4 p-4 border-b" style="border-color: var(--border-primary)">
-                <button id="location-back" class="p-2 rounded-full hover:opacity-80 transition-opacity">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-                        </path>
-                    </svg>
-                </button>
-                <div class="flex-1">
-                    <input id="location-search" type="text" placeholder="Search for area, street name..."
-                        class="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <!-- LOCATION MODAL -->
+        <div id="location-modal" class="fixed inset-0 modal-overlay z-50 hidden">
+            <div class="flex flex-col h-full">
+                <!-- Header -->
+                <div class="flex items-center gap-4 px-6 sm:px-8 md:px-12 lg:px-16 py-4 border-b max-w-5xl mx-auto w-full"
+                    style="border-color: var(--border-primary)">
+                    <button id="location-back" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div class="flex-1">
+                        <input id="location-search" type="text" placeholder="Search for area, street name..."
+                            class="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button id="location-close" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12">
+                            </path>
+                        </svg>
+                    </button>
                 </div>
-                <button id="location-close" class="p-2 rounded-full hover:opacity-80 transition-opacity">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
 
-            <!-- Content -->
-            <div class="flex-1 p-4 overflow-y-auto">
-                <!-- Use Current Location -->
-                <button id="use-current-location"
-                    class="w-full bg-teal-600 hover:bg-teal-700 text-white py-4 px-6 rounded-lg mb-4 flex items-center justify-center gap-3 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
-                        </path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Use Current Location
-                </button>
+                <!-- Content -->
+                <div class="flex-1 px-6 sm:px-8 md:px-12 lg:px-16 py-4 overflow-y-auto max-w-5xl mx-auto w-full">
+                    <!-- Use Current Location -->
+                    <button id="use-current-location"
+                        class="w-full bg-teal-600 hover:bg-teal-700 text-white py-4 px-6 rounded-lg mb-4 flex items-center justify-center gap-3 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Use Current Location
+                    </button>
 
-                <!-- Clear Cached Location -->
-                <button id="clear-location-cache"
-                    class="w-full hover:opacity-80 py-3 px-6 rounded-lg mb-6 flex items-center justify-center gap-3 transition-opacity"
-                    style="background-color: var(--bg-elevated); color: var(--text-primary)">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                        </path>
-                    </svg>
-                    Clear Saved Location
-                </button>
+                    <!-- Clear Cached Location -->
+                    <button id="clear-location-cache"
+                        class="w-full hover:opacity-80 py-3 px-6 rounded-lg mb-6 flex items-center justify-center gap-3 transition-opacity"
+                        style="background-color: var(--bg-elevated); color: var(--text-primary)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                        Clear Saved Location
+                    </button>
 
-                <!-- Location suggestions -->
-                <div id="location-suggestions" class="space-y-2">
-                    <!-- Will be populated dynamically -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SEARCH MODAL -->
-    <div id="search-modal" class="fixed inset-0 modal-overlay z-50 hidden">
-        <div class="flex flex-col h-full">
-            <!-- Header -->
-            <div class="flex items-center gap-4 p-4 border-b" style="border-color: var(--border-primary)">
-                <button id="search-back" class="p-2 rounded-full hover:opacity-80 transition-opacity">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-                        </path>
-                    </svg>
-                </button>
-                <div class="flex-1">
-                    <input id="search-input" type="text" placeholder="Search to compare prices, availability"
-                        class="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <button id="search-close" class="p-2 rounded-full hover:opacity-80 transition-opacity">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Content -->
-            <div class="flex-1 p-4 overflow-y-auto">
-                <!-- Search suggestions -->
-                <div id="search-suggestions" class="space-y-2">
-                    <!-- Will be populated dynamically -->
+                    <!-- Location suggestions -->
+                    <div id="location-suggestions" class="space-y-2">
+                        <!-- Will be populated dynamically -->
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- QuickKart JavaScript -->
-    <script src="static/js/app.js"></script>
+        <!-- SEARCH MODAL -->
+        <div id="search-modal" class="fixed inset-0 modal-overlay z-50 hidden">
+            <div class="flex flex-col h-full">
+                <!-- Header -->
+                <div class="flex items-center gap-4 px-6 sm:px-8 md:px-12 lg:px-16 py-4 border-b max-w-5xl mx-auto w-full"
+                    style="border-color: var(--border-primary)">
+                    <button id="search-back" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div class="flex-1">
+                        <input id="search-input" type="text" placeholder="Search to compare prices, availability"
+                            class="w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button id="search-close" class="p-2 rounded-full hover:opacity-80 transition-opacity">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 px-6 sm:px-8 md:px-12 lg:px-16 py-4 overflow-y-auto max-w-5xl mx-auto w-full">
+                    <!-- Search suggestions -->
+                    <div id="search-suggestions" class="space-y-2">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QuickKart JavaScript -->
+        <script src="static/js/app.js"></script>
 </body>
 
 </html>
