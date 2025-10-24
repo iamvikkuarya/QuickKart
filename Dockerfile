@@ -40,27 +40,35 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers
-RUN playwright install chromium
-RUN playwright install-deps chromium
+# Install Playwright browsers and dependencies as root
+RUN playwright install --with-deps chromium
 
 # Copy application code
 COPY . .
 
-# Create necessary directories
+# Create necessary directories and set permissions
 RUN mkdir -p static/css static/js static/assets
+
+# Create a non-root user for security
+RUN useradd -m -u 1000 appuser
+
+# Set proper permissions for playwright cache
+RUN mkdir -p /home/appuser/.cache && chown -R appuser:appuser /home/appuser/.cache
+
+# Change ownership of app directory
+RUN chown -R appuser:appuser /app
 
 # Set environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# Expose port (Railway will set PORT env var)
-EXPOSE $PORT
-
-# Create a non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# Switch to non-root user
 USER appuser
+
+# Install browsers again as the appuser to ensure proper permissions
+RUN playwright install chromium
 
 # Run the application (Railway expects to use PORT env var)
 CMD ["sh", "-c", "python -c \"import os; from app import app; app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))\""]
