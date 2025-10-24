@@ -57,8 +57,3 @@ docs/
 
 # Research folder (if not needed in production)
 jiomart-research/
-
-# Render specific files
-render.yaml
-build.sh
-Procfile
