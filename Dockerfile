@@ -1,6 +1,10 @@
+# Use Python 3.11 slim image as base
 FROM python:3.11-slim
 
-# Install system dependencies for Playwright
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies required for Playwright and other packages
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -27,10 +31,8 @@ RUN apt-get update && apt-get install -y \
     libxrandr2 \
     libxss1 \
     libxtst6 \
+    xdg-utils \
     && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /app
 
 # Copy requirements first for better caching
 COPY requirements.txt .
@@ -45,11 +47,20 @@ RUN playwright install-deps chromium
 # Copy application code
 COPY . .
 
-# Create tmp directory for database
-RUN mkdir -p /tmp
+# Create necessary directories
+RUN mkdir -p static/css static/js static/assets
 
-# Expose port
+# Set environment variables
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+ENV PYTHONPATH=/app
+
+# Expose port (Railway will set PORT env var)
 EXPOSE $PORT
 
-# Start command
-CMD gunicorn wsgi:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+# Create a non-root user for security
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Run the application (Railway expects to use PORT env var)
+CMD ["sh", "-c", "python -c \"import os; from app import app; app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))\""]

@@ -15,8 +15,12 @@ if __name__ == "__main__":
         init_db()
         print("✅ Database initialized")
     
-    print("🚀 Starting QuickKart server...")
-    print("📍 Make sure to add your Google Maps API key to .env file")
-    print("🌐 Server will be available at: http://localhost:5000")
+    # Get port from environment (Railway sets this)
+    port = int(os.environ.get("PORT", 5000))
+    debug_mode = os.environ.get("FLASK_ENV", "development") == "development"
     
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    print("🚀 Starting QuickKart server...")
+    print("📍 Make sure to add your Google Maps API key to environment variables")
+    print(f"🌐 Server will be available on port: {port}")
+    
+    app.run(debug=debug_mode, host="0.0.0.0", port=port)
