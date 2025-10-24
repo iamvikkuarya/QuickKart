@@ -322,7 +322,6 @@ function updateLocationFromPlace(place) {
     );
     locationData.pincode = pincodeComponent ? pincodeComponent.long_name : '';
 
-    console.log('📍 Extracted pincode from Google Places:', locationData.pincode);
     updateLocationDisplay();
 }
 
@@ -422,10 +421,41 @@ async function fetchETAs() {
         return;
     }
 
+    // Set loading state for all pills
     document.getElementById('eta-blinkit').textContent = 'Loading...';
     document.getElementById('eta-zepto').textContent = 'Loading...';
     document.getElementById('eta-dmart').textContent = 'Loading...';
 
+    // Fetch each ETA individually for real-time updates
+    const platforms = [
+        { id: 'eta-blinkit', platform: 'blinkit', endpoint: '/eta/blinkit' },
+        { id: 'eta-zepto', platform: 'zepto', endpoint: '/eta/zepto' },
+        { id: 'eta-dmart', platform: 'dmart', endpoint: '/eta/dmart' }
+    ];
+
+    // Start all requests simultaneously but update pills individually
+    platforms.forEach(async ({ id, platform, endpoint }) => {
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(locationData)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const eta = data.eta || data[platform] || 'N/A';
+                document.getElementById(id).textContent = formatETA(eta, platform);
+            } else {
+                throw new Error(`${platform} ETA fetch failed`);
+            }
+        } catch (error) {
+            console.error(`${platform} ETA fetch error:`, error);
+            document.getElementById(id).textContent = formatETA(null, platform);
+        }
+    });
+
+    // Fallback: Also try the original combined endpoint in case individual endpoints don't exist
     try {
         const response = await fetch('/eta', {
             method: 'POST',
@@ -435,17 +465,30 @@ async function fetchETAs() {
 
         if (response.ok) {
             const etaData = await response.json();
-            document.getElementById('eta-blinkit').textContent = formatETA(etaData.blinkit, 'blinkit');
-            document.getElementById('eta-zepto').textContent = formatETA(etaData.zepto, 'zepto');
-            document.getElementById('eta-dmart').textContent = formatETA(etaData.dmart, 'dmart');
-        } else {
-            throw new Error('ETA fetch failed');
+            
+            // Only update pills that are still showing "Loading..." (in case individual requests failed)
+            if (document.getElementById('eta-blinkit').textContent === 'Loading...') {
+                document.getElementById('eta-blinkit').textContent = formatETA(etaData.blinkit, 'blinkit');
+            }
+            if (document.getElementById('eta-zepto').textContent === 'Loading...') {
+                document.getElementById('eta-zepto').textContent = formatETA(etaData.zepto, 'zepto');
+            }
+            if (document.getElementById('eta-dmart').textContent === 'Loading...') {
+                document.getElementById('eta-dmart').textContent = formatETA(etaData.dmart, 'dmart');
+            }
         }
     } catch (error) {
-        console.error('ETA fetch error:', error);
-        document.getElementById('eta-blinkit').textContent = formatETA(null, 'blinkit');
-        document.getElementById('eta-zepto').textContent = formatETA(null, 'zepto');
-        document.getElementById('eta-dmart').textContent = formatETA(null, 'dmart');
+        console.error('Combined ETA fetch error:', error);
+        // Update any pills still showing "Loading..."
+        if (document.getElementById('eta-blinkit').textContent === 'Loading...') {
+            document.getElementById('eta-blinkit').textContent = formatETA(null, 'blinkit');
+        }
+        if (document.getElementById('eta-zepto').textContent === 'Loading...') {
+            document.getElementById('eta-zepto').textContent = formatETA(null, 'zepto');
+        }
+        if (document.getElementById('eta-dmart').textContent === 'Loading...') {
+            document.getElementById('eta-dmart').textContent = formatETA(null, 'dmart');
+        }
     }
 }
 
