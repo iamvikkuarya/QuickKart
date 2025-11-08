@@ -119,10 +119,28 @@ def eta():
 def eta_blinkit():
     data = request.get_json() or {}
     address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
+    pincode = (data.get('pincode') or "").strip() or "411038"
+    
+    # Check cache first
+    eta_key = make_eta_cache_key(address, pincode)
+    if eta_key in eta_cache:
+        ts, cached_result = eta_cache[eta_key]
+        if time.time() - ts < ETA_CACHE_TTL:
+            return jsonify({"eta": cached_result.get("blinkit", "N/A"), "platform": "blinkit"})
     
     try:
         eta = get_blinkit_eta(address)
-        return jsonify({"eta": eta or "N/A", "platform": "blinkit"})
+        result = {"eta": eta or "N/A", "platform": "blinkit"}
+        
+        # Update cache with this result
+        if eta_key in eta_cache:
+            ts, cached_data = eta_cache[eta_key]
+            cached_data["blinkit"] = eta or "N/A"
+            eta_cache[eta_key] = (time.time(), cached_data)
+        else:
+            eta_cache[eta_key] = (time.time(), {"blinkit": eta or "N/A", "zepto": "N/A", "dmart": "N/A"})
+        
+        return jsonify(result)
     except Exception as e:
         print("ETA blinkit error:", e)
         return jsonify({"eta": "N/A", "platform": "blinkit"})
@@ -131,10 +149,28 @@ def eta_blinkit():
 def eta_zepto():
     data = request.get_json() or {}
     address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
+    pincode = (data.get('pincode') or "").strip() or "411038"
+    
+    # Check cache first
+    eta_key = make_eta_cache_key(address, pincode)
+    if eta_key in eta_cache:
+        ts, cached_result = eta_cache[eta_key]
+        if time.time() - ts < ETA_CACHE_TTL:
+            return jsonify({"eta": cached_result.get("zepto", "N/A"), "platform": "zepto"})
     
     try:
         eta = get_zepto_eta(address)
-        return jsonify({"eta": eta or "N/A", "platform": "zepto"})
+        result = {"eta": eta or "N/A", "platform": "zepto"}
+        
+        # Update cache with this result
+        if eta_key in eta_cache:
+            ts, cached_data = eta_cache[eta_key]
+            cached_data["zepto"] = eta or "N/A"
+            eta_cache[eta_key] = (time.time(), cached_data)
+        else:
+            eta_cache[eta_key] = (time.time(), {"blinkit": "N/A", "zepto": eta or "N/A", "dmart": "N/A"})
+        
+        return jsonify(result)
     except Exception as e:
         print("ETA zepto error:", e)
         return jsonify({"eta": "N/A", "platform": "zepto"})
@@ -142,11 +178,29 @@ def eta_zepto():
 @app.route('/eta/dmart', methods=['POST'])
 def eta_dmart():
     data = request.get_json() or {}
+    address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
     pincode = (data.get('pincode') or "").strip() or "411038"
+    
+    # Check cache first
+    eta_key = make_eta_cache_key(address, pincode)
+    if eta_key in eta_cache:
+        ts, cached_result = eta_cache[eta_key]
+        if time.time() - ts < ETA_CACHE_TTL:
+            return jsonify({"eta": cached_result.get("dmart", "N/A"), "platform": "dmart"})
     
     try:
         eta = get_dmart_eta(pincode)
-        return jsonify({"eta": eta or "N/A", "platform": "dmart"})
+        result = {"eta": eta or "N/A", "platform": "dmart"}
+        
+        # Update cache with this result
+        if eta_key in eta_cache:
+            ts, cached_data = eta_cache[eta_key]
+            cached_data["dmart"] = eta or "N/A"
+            eta_cache[eta_key] = (time.time(), cached_data)
+        else:
+            eta_cache[eta_key] = (time.time(), {"blinkit": "N/A", "zepto": "N/A", "dmart": eta or "N/A"})
+        
+        return jsonify(result)
     except Exception as e:
         print("ETA dmart error:", e)
         return jsonify({"eta": "N/A", "platform": "dmart"})

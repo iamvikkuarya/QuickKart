@@ -21,10 +21,21 @@ def get_blinkit_eta(address: str, headed: bool = False) -> str:
     eta_result = None
     
     with sync_playwright() as p:
-        # 🚀 Simple browser setup (less is more!)
+        # 🚀 Aggressive browser optimization
         browser = p.chromium.launch(
-            headless=not headed,
-            args=["--no-sandbox", "--disable-dev-shm-usage"]
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-blink-features=AutomationControlled",
+                "--disable-gpu",
+                "--disable-extensions",
+                "--disable-background-networking",
+                "--disable-default-apps",
+                "--disable-sync",
+                "--no-first-run",
+                "--no-zygote"
+            ]
         )
         
         context = browser.new_context(
@@ -33,9 +44,9 @@ def get_blinkit_eta(address: str, headed: bool = False) -> str:
         
         page = context.new_page()
 
-        # 🚀 Simple resource blocking (don't over-optimize!)
+        # 🚀 Aggressive resource blocking
         context.route("**/*", lambda route: (
-            route.abort() if route.request.resource_type in ["image", "font", "stylesheet"] 
+            route.abort() if route.request.resource_type in ["image", "font", "stylesheet", "media"] 
             else route.continue_()
         ))
 
@@ -65,31 +76,24 @@ def get_blinkit_eta(address: str, headed: bool = False) -> str:
             print(f"⚡ Fast ETA check for: {address}")
             start_time = time.time()
             
-            # Navigate to blinkit
-            page.goto("https://blinkit.com/", timeout=20000)
+            # Navigate to blinkit - wait only for DOM, not full load
+            page.goto("https://blinkit.com/", wait_until="domcontentloaded", timeout=15000)
 
             # Type address
             search_box = page.locator('input[name="select-locality"]').first
             search_box.fill(address)
-            page.wait_for_timeout(500)
+            page.wait_for_timeout(300)  # Reduced from 500ms
 
-            # Click first suggestion (simple approach)
-            try:
-                suggestion = page.locator('div[role="option"]').first
-                if suggestion.count() > 0:
-                    suggestion.click(timeout=3000)
-                else:
-                    search_box.press("Enter")
-            except:
-                search_box.press("Enter")
-
-            # Wait for API response (shorter timeout)
-            max_wait = 2  # Reduced to 2 seconds
+            # Skip suggestion click, just press Enter (faster)
+            search_box.press("Enter")
+            
+            # Wait for API response - more aggressive timing
+            max_wait = 1.2  # Reduced from 2 seconds
             waited = 0
             
             while eta_result is None and waited < max_wait:
-                page.wait_for_timeout(200)  # Shorter intervals
-                waited += 0.2
+                page.wait_for_timeout(100)  # Faster polling (was 200ms)
+                waited += 0.1
                 
                 # Exit immediately when we get result
                 if eta_result:
