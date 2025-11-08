@@ -5,3 +5,4 @@ requests
 pytest
 beautifulsoup4
 rapidfuzz
+cloudscraper>=1.2.71
