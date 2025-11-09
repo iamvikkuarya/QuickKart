@@ -83,7 +83,6 @@ def run_scraper(search_query: str, max_products: int = 30):
             data = response.json()
             products = parse_search_response(data)
             all_products.extend(products)
-            print(f"   Page 1: {len(products)} products")
             
             # If we need more products and there are more available, fetch next page
             if len(all_products) < max_products and len(products) > 0:
@@ -98,7 +97,6 @@ def run_scraper(search_query: str, max_products: int = 30):
                     data2 = response2.json()
                     products2 = parse_search_response(data2)
                     all_products.extend(products2)
-                    print(f"   Page 2: {len(products2)} products")
                     
                     # Third request if still need more
                     if len(all_products) < max_products and len(products2) > 0:
@@ -111,20 +109,15 @@ def run_scraper(search_query: str, max_products: int = 30):
                             data3 = response3.json()
                             products3 = parse_search_response(data3)
                             all_products.extend(products3)
-                            print(f"   Page 3: {len(products3)} products")
             
             # Limit to max_products
             all_products = all_products[:max_products]
             
-            duration = time.time() - start_time
-            print(f"✅ Direct API: Found {len(all_products)} products in {duration:.2f}s")
             return all_products
         else:
-            print(f"⚠️ API returned status {response.status_code}")
             return []
             
-    except Exception as e:
-        print(f"❌ Direct API error: {e}")
+    except Exception:
         return []
 
 
@@ -149,8 +142,8 @@ def parse_search_response(data):
                     if product:
                         products.append(product)
                         
-    except Exception as e:
-        print(f"⚠️ Error parsing search response: {e}")
+    except Exception:
+        pass
     
     return products
 
@@ -204,8 +197,8 @@ def parse_product_from_snippet(snippet_data):
                 "in_stock": in_stock,
             }
             
-    except Exception as e:
-        print(f"⚠️ Error parsing product snippet: {e}")
+    except Exception:
+        pass
     
     return None
 

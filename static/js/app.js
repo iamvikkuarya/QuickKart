@@ -518,7 +518,7 @@ function renderResults(results) {
             return `
                 <a href="${p.product_url || "#"}" target="_blank" rel="noopener noreferrer"
                    class="flex justify-between items-center rounded-lg px-3 py-3 border hover:opacity-80 transition-opacity"
-                   style="background-color: var(--bg-elevated); border-color: var(--border-primary)">
+                   style="background-color: var(--bg-elevated); border-color: ${isCheapest && product.platforms.length > 1 ? 'rgba(34, 197, 94, 0.5)' : 'var(--border-primary)'}">
                     <div class="flex items-center gap-2">
                         <div class="overflow-hidden rounded-lg w-16 h-8 flex items-center justify-center">
                             ${meta.logo ? `<img src="${meta.logo}" alt="${meta.name}" class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none';">` : `<span class="text-gray-800 font-bold text-xs">${meta.name}</span>`}
@@ -543,7 +543,9 @@ function renderResults(results) {
                     <h3 class="text-base font-semibold leading-snug mb-1" style="color: var(--text-primary)">${name}</h3>
                     <p class="text-sm" style="color: var(--text-secondary)">${quantity}</p>
                 </div>
-                <div class="space-y-2 flex-1">${platformRows}</div>
+                <div class="space-y-2 flex-1">
+                    ${platformRows}
+                </div>
             </div>
         `;
     }).join('');

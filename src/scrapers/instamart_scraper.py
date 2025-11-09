@@ -12,7 +12,6 @@ _thread_local = threading.local()
 def _get_browser():
     """Get or create Playwright browser instance (thread-local)"""
     if not hasattr(_thread_local, 'playwright') or _thread_local.browser is None or not _thread_local.browser.is_connected():
-        print("🚀 Starting Playwright browser for Instamart scraper...")
         _thread_local.playwright = sync_playwright().start()
         _thread_local.browser = _thread_local.playwright.chromium.launch(headless=True)
         _thread_local.context = _thread_local.browser.new_context(
@@ -44,7 +43,6 @@ def run_instamart_scraper(query, address):
         lat, lng = geocode_address(address)
         
         if lat is None or lng is None:
-            print(f"⚠️ Instamart: Could not geocode address '{address}'")
             return []
         
         # Get browser context
@@ -73,7 +71,6 @@ def run_instamart_scraper(query, address):
             )
             
             if not response.ok:
-                print(f"⚠️ Instamart: Failed to get store ID")
                 return []
             
             data = response.json()
@@ -97,7 +94,6 @@ def run_instamart_scraper(query, address):
             )
             
             if not response.ok:
-                print(f"⚠️ Instamart: Search API returned status {response.status}")
                 return []
             
             data = response.json()
@@ -157,14 +153,12 @@ def run_instamart_scraper(query, address):
                         'in_stock': product.get('inStock', False)
                     })
             
-            print(f"✓ Instamart: Found {len(formatted_products)} products")
             return formatted_products
         
         finally:
             page.close()
     
-    except Exception as e:
-        print(f"⚠️ Instamart scraper error: {e}")
+    except Exception:
         return []
 
 def cleanup():
