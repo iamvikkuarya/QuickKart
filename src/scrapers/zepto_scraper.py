@@ -147,8 +147,17 @@ def extract_product_direct(item, products_list):
             
             # Build proper URL: /pn/{slug}/pvid/{variant-id}
             variant_id = variant_info.get('id', '')
-            # Create slug from product name
-            slug = name.lower().replace(' ', '-').replace('(', '').replace(')', '').replace(',', '')
+            # Create slug from product name - handle special characters
+            import re
+            slug = name.lower()
+            slug = slug.replace('(', '').replace(')', '').replace('[', '').replace(']', '')
+            slug = slug.replace(',', '').replace('.', '').replace('!', '').replace('?', '')
+            slug = slug.replace('&', 'and').replace('+', 'plus')
+            slug = slug.replace('/', '-').replace('\\', '-')
+            slug = re.sub(r'[^\w\s-]', '', slug)  # Remove remaining special chars except spaces and hyphens
+            slug = re.sub(r'\s+', '-', slug)  # Replace spaces with hyphens
+            slug = re.sub(r'-+', '-', slug)  # Replace multiple hyphens with single
+            slug = slug.strip('-')  # Remove leading/trailing hyphens
             product_url = f"https://www.zeptonow.com/pn/{slug}/pvid/{variant_id}" if variant_id else ""
             
             in_stock = not product_response.get('outOfStock', False)
