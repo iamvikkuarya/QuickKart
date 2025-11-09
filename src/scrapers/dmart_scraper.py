@@ -13,8 +13,6 @@ def run_dmart_scraper(query: str, store_id: str):
     data = resp.json()
 
     raw_products = data.get("products", [])
-    print(f"🔎 totalRecords={data.get('totalRecords')}, products in JSON={len(raw_products)}")
-
     products = []
     for product in raw_products:
         for sku in product.get("sKUs", []):
@@ -42,11 +40,9 @@ def run_dmart_scraper(query: str, store_id: str):
                     "delivery_time": "N/A",  # ETA handled separately
                     "in_stock": sku.get("buyable") == "true"
                 })
-            except Exception as e:
-                print("⚠️ Error parsing SKU:", e)
+            except Exception:
                 continue
 
-    print(f"✅ Parsed {len(products)} products")
     return products
 
 

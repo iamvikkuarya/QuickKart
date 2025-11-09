@@ -73,8 +73,8 @@ def save_products(products):
                 p.get("image_url"),
                 int(p.get("in_stock", True))
             ))
-        except Exception as e:
-            print("⚠️ DB insert error:", e, p)
+        except Exception:
+            pass  # Silently skip DB errors
     conn.commit()
     conn.close()
 
@@ -103,20 +103,20 @@ def eta():
 
         try:
             out["blinkit"] = fut_b.result(timeout=25) or "N/A"
-        except Exception as e:
-            print("ETA blinkit error:", e)
+        except Exception:
+            pass
         try:
             out["zepto"] = fut_z.result(timeout=25) or "N/A"
-        except Exception as e:
-            print("ETA zepto error:", e)
+        except Exception:
+            pass
         try:
             out["dmart"] = fut_d.result(timeout=25) or "N/A"
-        except Exception as e:
-            print("ETA dmart error:", e)
+        except Exception:
+            pass
         try:
             out["instamart"] = fut_i.result(timeout=20) or "N/A"
-        except Exception as e:
-            print("ETA instamart error:", e)
+        except Exception:
+            pass
 
     eta_cache[eta_key] = (time.time(), out)
     return jsonify(out)
@@ -148,8 +148,7 @@ def eta_blinkit():
             eta_cache[eta_key] = (time.time(), {"blinkit": eta or "N/A", "zepto": "N/A", "dmart": "N/A"})
         
         return jsonify(result)
-    except Exception as e:
-        print("ETA blinkit error:", e)
+    except Exception:
         return jsonify({"eta": "N/A", "platform": "blinkit"})
 
 @app.route('/eta/zepto', methods=['POST'])
@@ -178,8 +177,7 @@ def eta_zepto():
             eta_cache[eta_key] = (time.time(), {"blinkit": "N/A", "zepto": eta or "N/A", "dmart": "N/A"})
         
         return jsonify(result)
-    except Exception as e:
-        print("ETA zepto error:", e)
+    except Exception:
         return jsonify({"eta": "N/A", "platform": "zepto"})
 
 @app.route('/eta/dmart', methods=['POST'])
@@ -208,8 +206,7 @@ def eta_dmart():
             eta_cache[eta_key] = (time.time(), {"blinkit": "N/A", "zepto": "N/A", "dmart": eta or "N/A"})
         
         return jsonify(result)
-    except Exception as e:
-        print("ETA dmart error:", e)
+    except Exception:
         return jsonify({"eta": "N/A", "platform": "dmart"})
 
 @app.route('/eta/instamart', methods=['POST'])
@@ -238,8 +235,7 @@ def eta_instamart():
             eta_cache[eta_key] = (time.time(), {"blinkit": "N/A", "zepto": "N/A", "dmart": "N/A", "instamart": eta or "N/A"})
         
         return jsonify(result)
-    except Exception as e:
-        print("ETA instamart error:", e)
+    except Exception:
         return jsonify({"eta": "N/A", "platform": "instamart"})
 
 # --------------------------------------------------------------------------------------
@@ -252,7 +248,6 @@ def search():
     address = (data.get('address') or "").strip()
     pincode = (data.get('pincode') or "").strip() or "411038"
 
-    print(f"📦 Received: query={query}")
     if not query:
         return jsonify({"error": "Missing query"}), 400
 
@@ -263,13 +258,9 @@ def search():
     if cache_key in cache:
         timestamp, cached_result = cache[cache_key]
         if time.time() - timestamp < CACHE_TTL:
-            print(f"✅ Serving cached result for '{cache_key}'")
             return jsonify(cached_result)
         else:
-            print(f"⌛ Cache expired for '{cache_key}', re-scraping...")
             del cache[cache_key]
-
-    print(f"🔄 Scraping fresh data for '{query}' at {address} ({pincode})")
 
     results = []
     with ThreadPoolExecutor(max_workers=4) as ex:
@@ -282,52 +273,33 @@ def search():
         try:
             b = fut_blinkit.result() or []
             results += b
-            print(f"🟢 Blinkit returned {len(b)} items")
-        except Exception as e:
-            print(f"⚠️ Blinkit scraper error: {e}")
+        except Exception:
+            pass
 
         try:
             z = fut_zepto.result() or []
             results += z
-            print(f"🟣 Zepto returned {len(z)} items")
-        except Exception as e:
-            print(f"⚠️ Zepto scraper error: {e}")
+        except Exception:
+            pass
 
         if fut_dmart:
             try:
                 d = fut_dmart.result() or []
                 results += d
-                print(f"🟡 Dmart returned {len(d)} items")
-            except Exception as e:
-                print(f"⚠️ Dmart scraper error: {e}")
+            except Exception:
+                pass
         
         try:
             i = fut_instamart.result(timeout=20) or []
             results += i
-            print(f"🟠 Instamart returned {len(i)} items")
-        except Exception as e:
-            print(f"⚠️ Instamart scraper error: {e}")
+        except Exception:
+            pass
 
-    if not results:
-        print("⚠️ No results scraped from any platform")
-
-    # 💾 Save raw results into SQLite
+    # Save raw results into SQLite
     save_products(results)
 
-    # 🔍 Debug print before merging
-    print("\n🔍 DEBUG: Raw scraper output")
-    for r in results:
-        print(f"   {r['platform']} → {r['name']} | {repr(r['quantity'])}")
-
-    # 🔗 Merge products
+    # Merge products
     merged_results = merge_products(results)
-
-    # 🔍 Debug print after merging
-    print("\n📦 DEBUG: Merged output")
-    for m in merged_results:
-        print(f"- {m['name']} ({m['quantity']})")
-        for p in m['platforms']:
-            print(f"   • {p['platform']}: {p['price']} ({p['delivery_time']})")
 
     cache[cache_key] = (time.time(), merged_results)
     return jsonify(merged_results)
