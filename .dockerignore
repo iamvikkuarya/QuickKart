@@ -55,5 +55,9 @@ npm-debug.log*
 README.md
 docs/
 
-# Research folder (if not needed in production)
+# Research and testing folders (not needed in production)
 jiomart-research/
+blinkit-research/
+zepto-research/
+instamart-research/
+comparison-test/
