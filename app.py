@@ -10,11 +10,13 @@ load_dotenv()
 from src.scrapers.blinkit_scraper import run_scraper
 from src.scrapers.zepto_scraper import run_zepto_scraper
 from src.scrapers.dmart_scraper import run_dmart_scraper
+from src.scrapers.instamart_scraper import run_instamart_scraper
 
 # --- ETA helpers ---
 from src.eta.eta_blinkit import get_blinkit_eta
 from src.eta.eta_zepto import get_zepto_eta
 from src.eta.eta_dmart import get_dmart_eta
+from src.eta.eta_instamart import get_instamart_eta
 
 from src.scrapers.dmart_location import get_store_details
 
@@ -92,11 +94,12 @@ def eta():
         if time.time() - ts < ETA_CACHE_TTL:
             return jsonify(result)
 
-    out = {"blinkit": "N/A", "zepto": "N/A", "dmart": "N/A"}
-    with ThreadPoolExecutor(max_workers=3) as ex:
+    out = {"blinkit": "N/A", "zepto": "N/A", "dmart": "N/A", "instamart": "N/A"}
+    with ThreadPoolExecutor(max_workers=4) as ex:
         fut_b = ex.submit(get_blinkit_eta, address)
         fut_z = ex.submit(get_zepto_eta, address)
-        fut_d = ex.submit(get_dmart_eta, pincode)  # 🔑 use pincode for Dmart
+        fut_d = ex.submit(get_dmart_eta, pincode)
+        fut_i = ex.submit(get_instamart_eta, address)  # 🔑 use pincode for Dmart
 
         try:
             out["blinkit"] = fut_b.result(timeout=25) or "N/A"
@@ -110,6 +113,10 @@ def eta():
             out["dmart"] = fut_d.result(timeout=25) or "N/A"
         except Exception as e:
             print("ETA dmart error:", e)
+        try:
+            out["instamart"] = fut_i.result(timeout=20) or "N/A"
+        except Exception as e:
+            print("ETA instamart error:", e)
 
     eta_cache[eta_key] = (time.time(), out)
     return jsonify(out)
@@ -119,10 +126,28 @@ def eta():
 def eta_blinkit():
     data = request.get_json() or {}
     address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
+    pincode = (data.get('pincode') or "").strip() or "411038"
+    
+    # Check cache first
+    eta_key = make_eta_cache_key(address, pincode)
+    if eta_key in eta_cache:
+        ts, cached_result = eta_cache[eta_key]
+        if time.time() - ts < ETA_CACHE_TTL:
+            return jsonify({"eta": cached_result.get("blinkit", "N/A"), "platform": "blinkit"})
     
     try:
         eta = get_blinkit_eta(address)
-        return jsonify({"eta": eta or "N/A", "platform": "blinkit"})
+        result = {"eta": eta or "N/A", "platform": "blinkit"}
+        
+        # Update cache with this result
+        if eta_key in eta_cache:
+            ts, cached_data = eta_cache[eta_key]
+            cached_data["blinkit"] = eta or "N/A"
+            eta_cache[eta_key] = (time.time(), cached_data)
+        else:
+            eta_cache[eta_key] = (time.time(), {"blinkit": eta or "N/A", "zepto": "N/A", "dmart": "N/A"})
+        
+        return jsonify(result)
     except Exception as e:
         print("ETA blinkit error:", e)
         return jsonify({"eta": "N/A", "platform": "blinkit"})
@@ -131,10 +156,28 @@ def eta_blinkit():
 def eta_zepto():
     data = request.get_json() or {}
     address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
+    pincode = (data.get('pincode') or "").strip() or "411038"
+    
+    # Check cache first
+    eta_key = make_eta_cache_key(address, pincode)
+    if eta_key in eta_cache:
+        ts, cached_result = eta_cache[eta_key]
+        if time.time() - ts < ETA_CACHE_TTL:
+            return jsonify({"eta": cached_result.get("zepto", "N/A"), "platform": "zepto"})
     
     try:
         eta = get_zepto_eta(address)
-        return jsonify({"eta": eta or "N/A", "platform": "zepto"})
+        result = {"eta": eta or "N/A", "platform": "zepto"}
+        
+        # Update cache with this result
+        if eta_key in eta_cache:
+            ts, cached_data = eta_cache[eta_key]
+            cached_data["zepto"] = eta or "N/A"
+            eta_cache[eta_key] = (time.time(), cached_data)
+        else:
+            eta_cache[eta_key] = (time.time(), {"blinkit": "N/A", "zepto": eta or "N/A", "dmart": "N/A"})
+        
+        return jsonify(result)
     except Exception as e:
         print("ETA zepto error:", e)
         return jsonify({"eta": "N/A", "platform": "zepto"})
@@ -142,14 +185,62 @@ def eta_zepto():
 @app.route('/eta/dmart', methods=['POST'])
 def eta_dmart():
     data = request.get_json() or {}
+    address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
     pincode = (data.get('pincode') or "").strip() or "411038"
+    
+    # Check cache first
+    eta_key = make_eta_cache_key(address, pincode)
+    if eta_key in eta_cache:
+        ts, cached_result = eta_cache[eta_key]
+        if time.time() - ts < ETA_CACHE_TTL:
+            return jsonify({"eta": cached_result.get("dmart", "N/A"), "platform": "dmart"})
     
     try:
         eta = get_dmart_eta(pincode)
-        return jsonify({"eta": eta or "N/A", "platform": "dmart"})
+        result = {"eta": eta or "N/A", "platform": "dmart"}
+        
+        # Update cache with this result
+        if eta_key in eta_cache:
+            ts, cached_data = eta_cache[eta_key]
+            cached_data["dmart"] = eta or "N/A"
+            eta_cache[eta_key] = (time.time(), cached_data)
+        else:
+            eta_cache[eta_key] = (time.time(), {"blinkit": "N/A", "zepto": "N/A", "dmart": eta or "N/A"})
+        
+        return jsonify(result)
     except Exception as e:
         print("ETA dmart error:", e)
         return jsonify({"eta": "N/A", "platform": "dmart"})
+
+@app.route('/eta/instamart', methods=['POST'])
+def eta_instamart():
+    data = request.get_json() or {}
+    address = (data.get('address') or "").strip() or "Azad Nagar, Kothrud, Pune"
+    pincode = (data.get('pincode') or "").strip() or "411038"
+    
+    # Check cache first
+    eta_key = make_eta_cache_key(address, pincode)
+    if eta_key in eta_cache:
+        ts, cached_result = eta_cache[eta_key]
+        if time.time() - ts < ETA_CACHE_TTL:
+            return jsonify({"eta": cached_result.get("instamart", "N/A"), "platform": "instamart"})
+    
+    try:
+        eta = get_instamart_eta(address)
+        result = {"eta": eta or "N/A", "platform": "instamart"}
+        
+        # Update cache with this result
+        if eta_key in eta_cache:
+            ts, cached_data = eta_cache[eta_key]
+            cached_data["instamart"] = eta or "N/A"
+            eta_cache[eta_key] = (time.time(), cached_data)
+        else:
+            eta_cache[eta_key] = (time.time(), {"blinkit": "N/A", "zepto": "N/A", "dmart": "N/A", "instamart": eta or "N/A"})
+        
+        return jsonify(result)
+    except Exception as e:
+        print("ETA instamart error:", e)
+        return jsonify({"eta": "N/A", "platform": "instamart"})
 
 # --------------------------------------------------------------------------------------
 #                                 /search
@@ -181,11 +272,12 @@ def search():
     print(f"🔄 Scraping fresh data for '{query}' at {address} ({pincode})")
 
     results = []
-    with ThreadPoolExecutor(max_workers=3) as ex:
+    with ThreadPoolExecutor(max_workers=4) as ex:
         fut_blinkit = ex.submit(run_scraper, query)
         fut_zepto = ex.submit(run_zepto_scraper, query)
         unique_id, store_id = get_store_details(pincode)
-        fut_dmart = ex.submit(run_dmart_scraper, query, store_id) if store_id else None  # 🔑 use pincode for Dmart
+        fut_dmart = ex.submit(run_dmart_scraper, query, store_id) if store_id else None
+        fut_instamart = ex.submit(run_instamart_scraper, query, address)  # 🔑 use pincode for Dmart
 
         try:
             b = fut_blinkit.result() or []
@@ -208,6 +300,13 @@ def search():
                 print(f"🟡 Dmart returned {len(d)} items")
             except Exception as e:
                 print(f"⚠️ Dmart scraper error: {e}")
+        
+        try:
+            i = fut_instamart.result(timeout=20) or []
+            results += i
+            print(f"🟠 Instamart returned {len(i)} items")
+        except Exception as e:
+            print(f"⚠️ Instamart scraper error: {e}")
 
     if not results:
         print("⚠️ No results scraped from any platform")
