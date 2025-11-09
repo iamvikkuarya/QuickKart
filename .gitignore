@@ -16,7 +16,10 @@ __pycache__/
 blinkit_desktop_profile/
 desktop_user_data/
 user_data*/
+
+# Research and testing folders
 jiomart-research/
 blinkit-research/
 zepto-research/
 instamart-research/
+comparison-test/
