@@ -14,7 +14,8 @@ let locationData = {
 const PLATFORM_META = {
     blinkit: { name: "Blinkit", color: "bg-yellow-500", logo: "static/assets/Blinkit_logo.webp" },
     zepto: { name: "Zepto", color: "bg-purple-500", logo: "static/assets/zepto_logo.webp" },
-    dmart: { name: "DMart", color: "bg-green-500", logo: "static/assets/Dmart_logo.webp" }
+    dmart: { name: "DMart", color: "bg-green-500", logo: "static/assets/Dmart_logo.webp" },
+    instamart: { name: "Instamart", color: "bg-orange-500", logo: "static/assets/instamart_logo.png" }
 };
 
 // DOM elements
@@ -425,12 +426,14 @@ async function fetchETAs() {
     document.getElementById('eta-blinkit').textContent = 'Loading...';
     document.getElementById('eta-zepto').textContent = 'Loading...';
     document.getElementById('eta-dmart').textContent = 'Loading...';
+    document.getElementById('eta-instamart').textContent = 'Loading...';
 
     // Fetch each ETA individually for real-time updates
     const platforms = [
         { id: 'eta-blinkit', platform: 'blinkit', endpoint: '/eta/blinkit' },
         { id: 'eta-zepto', platform: 'zepto', endpoint: '/eta/zepto' },
-        { id: 'eta-dmart', platform: 'dmart', endpoint: '/eta/dmart' }
+        { id: 'eta-dmart', platform: 'dmart', endpoint: '/eta/dmart' },
+        { id: 'eta-instamart', platform: 'instamart', endpoint: '/eta/instamart' }
     ];
 
     // Fetch each ETA independently - they update as they complete (better UX)
@@ -505,6 +508,8 @@ function renderResults(results) {
                 eta = document.getElementById("eta-zepto")?.textContent || "N/A";
             } else if (key === "dmart") {
                 eta = document.getElementById("eta-dmart")?.textContent || "N/A";
+            } else if (key === "instamart") {
+                eta = document.getElementById("eta-instamart")?.textContent || "N/A";
             }
 
             const stockStatus = p.in_stock !== false ? "" : `<span class="ml-2 text-xs text-red-400">Out of Stock</span>`;
