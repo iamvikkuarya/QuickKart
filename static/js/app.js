@@ -14,7 +14,8 @@ let locationData = {
 const PLATFORM_META = {
     blinkit: { name: "Blinkit", color: "bg-yellow-500", logo: "static/assets/Blinkit_logo.webp" },
     zepto: { name: "Zepto", color: "bg-purple-500", logo: "static/assets/zepto_logo.webp" },
-    dmart: { name: "DMart", color: "bg-green-500", logo: "static/assets/Dmart_logo.webp" }
+    dmart: { name: "DMart", color: "bg-green-500", logo: "static/assets/Dmart_logo.webp" },
+    instamart: { name: "Instamart", color: "bg-orange-500", logo: "static/assets/instamart_logo.png" }
 };
 
 // DOM elements
@@ -425,16 +426,18 @@ async function fetchETAs() {
     document.getElementById('eta-blinkit').textContent = 'Loading...';
     document.getElementById('eta-zepto').textContent = 'Loading...';
     document.getElementById('eta-dmart').textContent = 'Loading...';
+    document.getElementById('eta-instamart').textContent = 'Loading...';
 
     // Fetch each ETA individually for real-time updates
     const platforms = [
         { id: 'eta-blinkit', platform: 'blinkit', endpoint: '/eta/blinkit' },
         { id: 'eta-zepto', platform: 'zepto', endpoint: '/eta/zepto' },
-        { id: 'eta-dmart', platform: 'dmart', endpoint: '/eta/dmart' }
+        { id: 'eta-dmart', platform: 'dmart', endpoint: '/eta/dmart' },
+        { id: 'eta-instamart', platform: 'instamart', endpoint: '/eta/instamart' }
     ];
 
-    // Start all requests simultaneously but update pills individually
-    platforms.forEach(async ({ id, platform, endpoint }) => {
+    // Fetch each ETA independently - they update as they complete (better UX)
+    Promise.all(platforms.map(async ({ id, platform, endpoint }) => {
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
@@ -453,43 +456,7 @@ async function fetchETAs() {
             console.error(`${platform} ETA fetch error:`, error);
             document.getElementById(id).textContent = formatETA(null, platform);
         }
-    });
-
-    // Fallback: Also try the original combined endpoint in case individual endpoints don't exist
-    try {
-        const response = await fetch('/eta', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(locationData)
-        });
-
-        if (response.ok) {
-            const etaData = await response.json();
-            
-            // Only update pills that are still showing "Loading..." (in case individual requests failed)
-            if (document.getElementById('eta-blinkit').textContent === 'Loading...') {
-                document.getElementById('eta-blinkit').textContent = formatETA(etaData.blinkit, 'blinkit');
-            }
-            if (document.getElementById('eta-zepto').textContent === 'Loading...') {
-                document.getElementById('eta-zepto').textContent = formatETA(etaData.zepto, 'zepto');
-            }
-            if (document.getElementById('eta-dmart').textContent === 'Loading...') {
-                document.getElementById('eta-dmart').textContent = formatETA(etaData.dmart, 'dmart');
-            }
-        }
-    } catch (error) {
-        console.error('Combined ETA fetch error:', error);
-        // Update any pills still showing "Loading..."
-        if (document.getElementById('eta-blinkit').textContent === 'Loading...') {
-            document.getElementById('eta-blinkit').textContent = formatETA(null, 'blinkit');
-        }
-        if (document.getElementById('eta-zepto').textContent === 'Loading...') {
-            document.getElementById('eta-zepto').textContent = formatETA(null, 'zepto');
-        }
-        if (document.getElementById('eta-dmart').textContent === 'Loading...') {
-            document.getElementById('eta-dmart').textContent = formatETA(null, 'dmart');
-        }
-    }
+    }));
 }
 
 // Results rendering
@@ -541,6 +508,8 @@ function renderResults(results) {
                 eta = document.getElementById("eta-zepto")?.textContent || "N/A";
             } else if (key === "dmart") {
                 eta = document.getElementById("eta-dmart")?.textContent || "N/A";
+            } else if (key === "instamart") {
+                eta = document.getElementById("eta-instamart")?.textContent || "N/A";
             }
 
             const stockStatus = p.in_stock !== false ? "" : `<span class="ml-2 text-xs text-red-400">Out of Stock</span>`;
@@ -549,7 +518,7 @@ function renderResults(results) {
             return `
                 <a href="${p.product_url || "#"}" target="_blank" rel="noopener noreferrer"
                    class="flex justify-between items-center rounded-lg px-3 py-3 border hover:opacity-80 transition-opacity"
-                   style="background-color: var(--bg-elevated); border-color: var(--border-primary)">
+                   style="background-color: var(--bg-elevated); border-color: ${isCheapest && product.platforms.length > 1 ? 'rgba(34, 197, 94, 0.5)' : 'var(--border-primary)'}">
                     <div class="flex items-center gap-2">
                         <div class="overflow-hidden rounded-lg w-16 h-8 flex items-center justify-center">
                             ${meta.logo ? `<img src="${meta.logo}" alt="${meta.name}" class="w-full h-full object-cover rounded-lg" onerror="this.style.display='none';">` : `<span class="text-gray-800 font-bold text-xs">${meta.name}</span>`}
@@ -574,7 +543,9 @@ function renderResults(results) {
                     <h3 class="text-base font-semibold leading-snug mb-1" style="color: var(--text-primary)">${name}</h3>
                     <p class="text-sm" style="color: var(--text-secondary)">${quantity}</p>
                 </div>
-                <div class="space-y-2 flex-1">${platformRows}</div>
+                <div class="space-y-2 flex-1">
+                    ${platformRows}
+                </div>
             </div>
         `;
     }).join('');

@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/iamvikkuarya/QuickKart.svg)](https://github.com/iamvikkuarya/QuickKart/stargazers)
 
-> **Never overpay for groceries again!** QuickKart instantly compares prices across Blinkit, Zepto, and DMart to help you find the best deals with real-time delivery estimates.
+> **Never overpay for groceries again!** QuickKart instantly compares prices across Blinkit, Zepto, DMart, and Swiggy Instamart to help you find the best deals with real-time delivery estimates.
 
 ---
 
@@ -16,9 +16,10 @@
 🔍 **Smart Product Matching** - Intelligent fuzzy matching across platforms  
 ⚡ **Real-time Price Comparison** - Live scraping with 5-minute cache  
 📍 **Location-aware Results** - Delivery times based on your location  
+🛍️ **4 Major Platforms** - Blinkit, Zepto, DMart & Swiggy Instamart  
 🌙 **Modern UI** - Dark/light theme with mobile-first design  
-🚀 **Lightning Fast** - Concurrent scraping for instant results  
-💾 **Smart Caching** - Optimized performance with SQLite storage  
+� **SLightning Fast** - Concurrent scraping for instant results  
+💾 **Smart Caching** - Optimized performance with SQLite storage 
 
 ---
 
@@ -90,8 +91,8 @@ Visit `http://localhost:5000` to start comparing prices! 🎉
 │ • Tailwind CSS  │◄──►│ • /search        │◄──►│ • Blinkit       │
 │ • Vanilla JS    │    │ • /eta           │    │ • Zepto         │
 │ • Google Maps   │    │ • Caching        │    │ • DMart         │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-                                │
+└─────────────────┘    └──────────────────┘    │ • Instamart     │
+                                │               └─────────────────┘
                                 ▼
                        ┌─────────────────┐
                        │   SQLite DB     │
@@ -103,22 +104,45 @@ Visit `http://localhost:5000` to start comparing prices! 🎉
 
 ---
 
+## �️ Suppnorted Platforms
+
+### Blinkit
+- ⚡ API-based scraping (fastest)
+- 📍 Location-aware delivery times
+- 🔄 Real-time inventory
+
+### Zepto
+- 🌐 Web scraping with Playwright
+- ⚡ Fast delivery estimates
+- 📦 Wide product range
+
+### DMart Ready
+- 🏪 Store-based delivery
+- 📅 Slot-based delivery times
+- 💰 Competitive pricing
+
+### Swiggy Instamart (NEW!)
+- 🎯 Location-based store selection
+- 🗺️ Google Maps geocoding
+- ⚡ Quick delivery times
+- 📍 Accurate address matching
+
 ## 📱 Screenshots
 
 ### Home Screen
 - Clean, intuitive interface
-- Real-time delivery estimates
+- Real-time delivery estimates for all 4 platforms
 - Location-based results
 
 ### Search Results
 - Side-by-side price comparison
 - Best price highlighting
-- Direct links to purchase
+- Direct links to purchase on each platform
 
 ### Smart Features
 - Recent search history
 - Trending items
-- Platform filtering
+- Platform filtering (All/Blinkit/Zepto/DMart/Instamart)
 
 ---
 
@@ -174,7 +198,8 @@ Content-Type: application/json
 {
   "blinkit": "12 min",
   "zepto": "15 min", 
-  "dmart": "Tomorrow 9 to 11 AM"
+  "dmart": "Tomorrow 9 to 11 AM",
+  "instamart": "10 min"
 }
 ```
 
@@ -189,9 +214,17 @@ QuickKart/
 │   ├── scrapers/          # Platform-specific scrapers
 │   │   ├── blinkit_scraper.py
 │   │   ├── zepto_scraper.py
-│   │   └── dmart_scraper.py
+│   │   ├── dmart_scraper.py
+│   │   └── instamart_scraper.py
 │   ├── eta/               # Delivery time fetchers
+│   │   ├── eta_blinkit.py
+│   │   ├── eta_zepto.py
+│   │   ├── eta_dmart.py
+│   │   └── eta_instamart.py
 │   └── core/              # Utilities & database
+│       ├── db.py
+│       ├── utils.py
+│       └── geocoding.py
 ├── static/                # Frontend assets
 ├── app.py                 # Flask application
 └── requirements.txt       # Dependencies
@@ -245,16 +278,19 @@ We welcome contributions! Here's how you can help:
 - Check if platform websites have changed their structure
 - Verify internet connection
 - Try running in headed mode for debugging
+- For Instamart: Ensure Google Maps API key is configured
 
 **Location detection not working:**
 - Ensure Google Maps API key is valid
-- Check if required APIs are enabled
+- Check if required APIs are enabled (Maps JavaScript API, Places API, Geocoding API)
 - Verify browser permissions for location access
+- Instamart requires accurate geocoding for store selection
 
 **Slow performance:**
 - Check cache TTL settings
 - Verify database isn't corrupted
 - Monitor network latency
+- Playwright browsers may take time on first launch
 
 ---
 
@@ -269,7 +305,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Playwright** - For reliable web scraping
 - **Flask** - For the lightweight web framework
 - **Tailwind CSS** - For beautiful, responsive design
-- **Google Maps** - For location services
+- **Google Maps** - For location services and geocoding
+- **Cloudscraper** - For bypassing Cloudflare protection
 
 ---
 

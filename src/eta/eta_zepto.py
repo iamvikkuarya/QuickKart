@@ -114,20 +114,48 @@ def get_zepto_eta(address: str, headed: bool = False) -> str:
             if not location_set:
                 return "Location Setup Failed"
             
-            # Enhanced address input with reduced timeout
-            try:
-                page.fill('div[data-testid="address-search-input"] input', address, timeout=5000)
-                page.wait_for_timeout(500)  # Reduced wait time
-            except:
+            # Enhanced address input with multiple fallbacks
+            input_filled = False
+            input_selectors = [
+                'div[data-testid="address-search-input"] input',
+                'input[placeholder*="Search"]',
+                'input[type="text"]',
+                'input[placeholder*="address"]'
+            ]
+            
+            for selector in input_selectors:
+                try:
+                    page.fill(selector, address, timeout=3000)
+                    page.wait_for_timeout(800)
+                    input_filled = True
+                    break
+                except:
+                    continue
+            
+            if not input_filled:
                 return "Address Input Failed"
             
-            # Enhanced suggestion click with fallback
-            try:
-                page.click('div[data-testid="address-search-item"]', timeout=8000)
-            except:
-                # Fallback: press Enter
+            # Enhanced suggestion click with multiple fallbacks
+            suggestion_clicked = False
+            suggestion_selectors = [
+                'div[data-testid="address-search-item"]',
+                '[role="option"]',
+                '.suggestion-item',
+                'li:has-text("' + address.split(',')[0] + '")'
+            ]
+            
+            for selector in suggestion_selectors:
+                try:
+                    page.click(selector, timeout=5000)
+                    suggestion_clicked = True
+                    break
+                except:
+                    continue
+            
+            if not suggestion_clicked:
+                # Final fallback: press Enter
                 page.keyboard.press("Enter")
-                page.wait_for_timeout(1000)
+                page.wait_for_timeout(1500)
             
             # Enhanced location confirmation with fallback
             try:
