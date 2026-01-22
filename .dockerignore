@@ -1,63 +1,12 @@
-# Git
-.git
-.gitignore
-
-# Python
 __pycache__
+.env
+.venv
+.git
+.vscode
+logs/
 *.pyc
 *.pyo
 *.pyd
-.Python
-env
-pip-log.txt
-pip-delete-this-directory.txt
-.tox
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.git
-.mypy_cache
-.pytest_cache
-.hypothesis
-
-# Virtual environments
-venv/
-env/
-ENV/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Project specific
-*.db
-.env
-node_modules/
-npm-debug.log*
-
-# Documentation
-README.md
-docs/
-
-# Research and testing folders (not needed in production)
-jiomart-research/
-blinkit-research/
-zepto-research/
-instamart-research/
-comparison-test/
+user_data/
+blinkit_desktop_profile/
