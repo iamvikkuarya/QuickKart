@@ -6,6 +6,11 @@ Uses cloudscraper to bypass Cloudflare protection
 
 import cloudscraper
 import time
+import logging
+import os
+import uuid
+
+logger = logging.getLogger(__name__)
 
 
 def run_scraper(search_query: str, max_products: int = 30):
@@ -38,7 +43,7 @@ def run_scraper(search_query: str, max_products: int = 30):
         # Blinkit search API endpoint
         url = "https://blinkit.com/v1/layout/search"
         
-        # Headers from captured traffic
+        # Headers - using env vars where applicable for configurability
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Accept': 'application/json, text/plain, */*',
@@ -50,14 +55,14 @@ def run_scraper(search_query: str, max_products: int = 30):
             'sec-ch-ua-platform': '"Windows"',
             'app_client': 'consumer_web',
             'platform': 'desktop_web',
-            'web_app_version': '1008010016',
-            'app_version': '1010101010',
+            'web_app_version': os.getenv('BLINKIT_WEB_APP_VERSION', '1008010016'),
+            'app_version': os.getenv('BLINKIT_APP_VERSION', '1010101010'),
             'x-age-consent-granted': 'false',
             'access_token': 'null',
-            'lat': '28.4652382',
-            'lon': '77.0615957',
-            'device_id': '6c08b810dabfabea',
-            'session_uuid': 'c3f8e4c8-15e5-4b41-ab7e-7f4f72b78939',
+            'lat': os.getenv('BLINKIT_DEFAULT_LAT', '28.4652382'),
+            'lon': os.getenv('BLINKIT_DEFAULT_LON', '77.0615957'),
+            'device_id': str(uuid.uuid4())[:16],  # Generate unique device ID
+            'session_uuid': str(uuid.uuid4()),     # Generate unique session
         }
         
         # First request - get initial products
@@ -117,7 +122,8 @@ def run_scraper(search_query: str, max_products: int = 30):
         else:
             return []
             
-    except Exception:
+    except Exception as e:
+        logger.error(f"Blinkit scraper failed for '{search_query}': {e}")
         return []
 
 
@@ -142,8 +148,8 @@ def parse_search_response(data):
                     if product:
                         products.append(product)
                         
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Failed to parse search response: {e}")
     
     return products
 
@@ -197,8 +203,8 @@ def parse_product_from_snippet(snippet_data):
                 "in_stock": in_stock,
             }
             
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to parse product snippet: {e}")
     
     return None
 
