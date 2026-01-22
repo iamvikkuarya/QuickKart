@@ -3,7 +3,7 @@
 **Smart grocery price comparison across India's top quick-commerce platforms**
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
-[![Flask](https://img.shields.io/badge/flask-2.0%2B-green.svg)](https://flask.palletsprojects.com)
+[![Flask](https://img.shields.io/badge/flask-3.0%2B-green.svg)](https://flask.palletsprojects.com)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/iamvikkuarya/QuickKart.svg)](https://github.com/iamvikkuarya/QuickKart/stargazers)
 
@@ -18,8 +18,9 @@
 📍 **Location-aware Results** - Delivery times based on your location  
 🛍️ **4 Major Platforms** - Blinkit, Zepto, DMart & Swiggy Instamart  
 🌙 **Modern UI** - Dark/light theme with mobile-first design  
-� **SLightning Fast** - Concurrent scraping for instant results  
-💾 **Smart Caching** - Optimized performance with SQLite storage 
+�⚡ **Lightning Fast** - Concurrent scraping for instant results  
+💾 **Smart Caching** - Optimized performance with SQLite storage
+🛡️ **Rate Limiting** - API protection with Flask-Limiter 
 
 ---
 
@@ -119,6 +120,7 @@ Visit `http://localhost:5000` to start comparing prices! 🎉
 ### DMart Ready
 - 🏪 Store-based delivery
 - 📅 Slot-based delivery times
+- 📍 **Smart Pincode Resolution** - Auto-resolves internal Store IDs
 - 💰 Competitive pricing
 
 ### Swiggy Instamart (NEW!)
@@ -194,7 +196,6 @@ Content-Type: application/json
 ```
 
 **Response:**
-```json
 {
   "blinkit": "12 min",
   "zepto": "15 min", 
@@ -202,6 +203,30 @@ Content-Type: application/json
   "instamart": "10 min"
 }
 ```
+
+### Get Single Platform ETA
+```http
+POST /eta_single/<platform>
+Content-Type: application/json
+
+{
+  "address": "Kothrud, Pune",
+  "pincode": "411038"
+}
+```
+*Platform can be: blinkit, zepto, dmart, instamart*
+
+**Response:**
+```json
+{
+  "eta": "12 min",
+  "platform": "blinkit"
+}
+```
+
+### Rate Limiting
+- **Default Limit**: 200 requests per day, 60 requests per hour
+- **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
 
 ---
 
@@ -224,22 +249,30 @@ QuickKart/
 │   └── core/              # Utilities & database
 │       ├── db.py
 │       ├── utils.py
-│       └── geocoding.py
+│       ├── geocoding.py
+│       └── logging_config.py
 ├── static/                # Frontend assets
+├── logs/                  # Application logs (auto-created)
 ├── app.py                 # Flask application
-└── requirements.txt       # Dependencies
+└── requirements.txt       # Dependencies (pinned versions)
 ```
 
 ### Running in Development Mode
 
 ```bash
-# Enable debug mode
+# Enable debug mode (Windows)
+set FLASK_ENV=development
+set FLASK_DEBUG=1
+
+# Enable debug mode (macOS/Linux)
 export FLASK_ENV=development
 export FLASK_DEBUG=1
 
-# Run with auto-reload
+# Run the app (use_reloader=False to avoid Windows socket errors)
 python app.py
 ```
+
+> **Note:** Logs are saved to `logs/quickkart_YYYY-MM-DD.log`
 
 ### Debugging Scrapers
 
@@ -287,10 +320,18 @@ We welcome contributions! Here's how you can help:
 - Instamart requires accurate geocoding for store selection
 
 **Slow performance:**
-- Check cache TTL settings
+- Check cache TTL settings (default: 5 minutes)
 - Verify database isn't corrupted
 - Monitor network latency
 - Playwright browsers may take time on first launch
+
+**Windows socket error (WinError 10038):**
+- This is fixed by default with `use_reloader=False`
+- If using `FLASK_DEBUG=1`, the reloader is disabled automatically
+
+**Rate Limit Exceeded (429):**
+- You have exceeded the API rate limit (200/day or 60/hour)
+- Check `Retry-After` header for wait time
 
 ---
 
