@@ -1,9 +1,18 @@
-Flask
-python-dotenv
-playwright
-requests
-pytest
-beautifulsoup4
-rapidfuzz
-cloudscraper>=1.2.71
+# Core dependencies with pinned versions
+Flask==3.0.0
+python-dotenv==1.0.0
+requests==2.31.0
+flask-limiter==3.5.0
 gunicorn
+
+# Scraping
+playwright==1.41.0
+beautifulsoup4==4.12.3
+cloudscraper>=1.2.71
+
+# Utilities
+rapidfuzz==3.6.1
+cachetools==5.3.2
+
+# Testing
+pytest==8.0.0

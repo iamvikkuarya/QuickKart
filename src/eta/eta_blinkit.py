@@ -6,6 +6,11 @@ Uses cloudscraper to bypass Cloudflare protection
 
 import cloudscraper
 import time
+import logging
+import os
+import uuid
+
+logger = logging.getLogger(__name__)
 
 
 def get_blinkit_eta(address: str, lat: str = None, lon: str = None) -> str:
@@ -23,9 +28,9 @@ def get_blinkit_eta(address: str, lat: str = None, lon: str = None) -> str:
     Performance: ~0.5-1 second
     """
     
-    # Default coordinates (Delhi) if not provided
-    use_lat = lat or "28.4652382"
-    use_lon = lon or "77.0615957"
+    # Default coordinates from env or fallback to Delhi
+    use_lat = lat or os.getenv('BLINKIT_DEFAULT_LAT', '28.4652382')
+    use_lon = lon or os.getenv('BLINKIT_DEFAULT_LON', '77.0615957')
     
     try:
         start_time = time.time()
@@ -42,7 +47,7 @@ def get_blinkit_eta(address: str, lat: str = None, lon: str = None) -> str:
         # Blinkit ETA API endpoint
         url = "https://blinkit.com/v1/consumerweb/eta"
         
-        # Headers from captured traffic
+        # Headers - using env vars for configurability
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
             'Accept': 'application/json, text/plain, */*',
@@ -54,15 +59,14 @@ def get_blinkit_eta(address: str, lat: str = None, lon: str = None) -> str:
             'sec-ch-ua-platform': '"Windows"',
             'app_client': 'consumer_web',
             'platform': 'desktop_web',
-            'web_app_version': '1008010016',
-            'app_version': '52434332',
+            'web_app_version': os.getenv('BLINKIT_WEB_APP_VERSION', '1008010016'),
+            'app_version': os.getenv('BLINKIT_APP_VERSION', '52434332'),
             'x-age-consent-granted': 'false',
             'access_token': 'null',
-            # Location headers
             'lat': use_lat,
             'lon': use_lon,
-            'device_id': '6c08b810dabfabea',
-            'session_uuid': 'c3f8e4c8-15e5-4b41-ab7e-7f4f72b78939',
+            'device_id': str(uuid.uuid4())[:16],
+            'session_uuid': str(uuid.uuid4()),
         }
         
         # Make API call
@@ -75,17 +79,17 @@ def get_blinkit_eta(address: str, lat: str = None, lon: str = None) -> str:
             eta_minutes = data.get('eta_in_minutes')
             
             if eta_minutes and str(eta_minutes).isdigit():
-                print(f"⚡ Direct API ETA: {eta_minutes} min (took {duration:.2f}s)")
+                logger.debug(f"Blinkit ETA: {eta_minutes} min (took {duration:.2f}s)")
                 return f"{eta_minutes} min"
             else:
-                print(f"⚠️ Store unavailable at this location")
+                logger.info(f"Blinkit store unavailable at this location")
                 return "Store Unavailable"
         else:
-            print(f"⚠️ API returned status {response.status_code}")
+            logger.warning(f"Blinkit ETA API returned status {response.status_code}")
             return "N/A"
             
     except Exception as e:
-        print(f"❌ Direct API error: {e}")
+        logger.error(f"Blinkit ETA error: {e}")
         return "N/A"
 
 

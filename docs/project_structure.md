@@ -3,7 +3,6 @@
 ```
 QuickKart/
 ├── src/                          # Source code
-│   ├── __init__.py
 │   ├── scrapers/                 # Platform scrapers
 │   │   ├── blinkit_scraper.py   # Blinkit API scraper
 │   │   ├── zepto_scraper.py     # Zepto API scraper (optimized)
@@ -16,9 +15,10 @@ QuickKart/
 │   │   ├── eta_dmart.py
 │   │   └── eta_instamart.py
 │   └── core/                     # Core utilities
-│       ├── __init__.py
 │       ├── utils.py              # Product merging & comparison logic
-│       └── db.py                 # Database operations
+│       ├── db.py                 # Database operations
+│       ├── geocoding.py          # Google Maps wrappers
+│       └── logging_config.py     # App-wide logging setup
 ├── static/                       # Frontend assets
 │   ├── index.html                # Main UI
 │   ├── css/
@@ -26,13 +26,8 @@ QuickKart/
 │   ├── js/
 │   │   └── app.js                # Frontend logic
 │   └── assets/                   # Platform logos & images
-│       ├── Blinkit_logo.webp
-│       ├── zepto_logo.webp
-│       ├── Dmart_logo.webp
-│       └── instamart_logo.png
 ├── docs/                         # Documentation
 │   └── project_structure.md
-├── comparison-test/              # Testing for comparison logic
 ├── zepto-research/               # Research & optimization tests
 ├── app.py                        # Flask application
 ├── run.py                        # Application runner
@@ -67,6 +62,8 @@ Core application utilities:
   - Brand extraction (30+ known brands)
   - Price analysis with savings calculation
 - **db.py**: SQLite database operations and schema
+- **geocoding.py**: Helper functions for interacting with Google Maps Geocoding API.
+- **logging_config.py**: Centralized logging configuration using Python's logging module.
 
 ### Frontend (`static/`)
 - **index.html**: Main UI with dark mode support

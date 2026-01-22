@@ -1,5 +1,8 @@
 # eta_dmart.py
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 BASE_HEADERS = {
     "User-Agent": (
@@ -65,7 +68,7 @@ def get_dmart_eta(pincode_or_address: str) -> str:
 
         return "N/A"
     except Exception as e:
-        print("⚠️ ETA fetch failed:", e)
+        logger.warning(f"DMart ETA fetch failed: {e}")
         return "N/A"
 
 if __name__ == "__main__":

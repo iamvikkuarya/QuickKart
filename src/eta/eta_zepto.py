@@ -1,6 +1,9 @@
 # eta_zepto.py
 from playwright.sync_api import sync_playwright
 import re, random
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Enhanced user agents for better stealth
 USER_AGENTS = [

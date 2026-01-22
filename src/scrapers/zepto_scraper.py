@@ -2,6 +2,9 @@
 # Uses API interception for 60% faster scraping (~4s vs ~10s)
 from playwright.sync_api import sync_playwright, TimeoutError
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 def clean_price(price_str: str) -> str:
     """Clean price string"""
@@ -31,91 +34,100 @@ def run_zepto_scraper(search_query: str):
     """Optimized Zepto scraper using API interception"""
     
     products = []
+    browser = None
     
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-gpu',
-                '--no-sandbox',
-                '--disable-dev-shm-usage'
-            ]
-        )
-        
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            viewport={"width": 1920, "height": 1080}
-        )
-        
-        # Stealth
-        context.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => undefined });")
-        
-        # Block images, fonts, media, CSS for speed
-        context.route("**/*", lambda route: (
-            route.abort() if route.request.resource_type in ['image', 'font', 'media', 'stylesheet']
-            else route.continue_()
-        ))
-        
-        page = context.new_page()
-        
-        # Intercept API response
-        def handle_response(response):
-            if '/api/v3/search' in response.url and response.status == 200:
-                try:
-                    data = response.json()
-                    layout = data.get('layout', [])
-                    
-                    for widget in layout:
-                        widget_data = widget.get('data', {})
-                        if not widget_data:
-                            continue
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-gpu',
+                    '--no-sandbox',
+                    '--disable-dev-shm-usage'
+                ]
+            )
+            
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1920, "height": 1080}
+            )
+            
+            # Stealth
+            context.add_init_script("Object.defineProperty(navigator, 'webdriver', { get: () => undefined });")
+            
+            # Block images, fonts, media, CSS for speed
+            context.route("**/*", lambda route: (
+                route.abort() if route.request.resource_type in ['image', 'font', 'media', 'stylesheet']
+                else route.continue_()
+            ))
+            
+            page = context.new_page()
+            
+            # Intercept API response
+            def handle_response(response):
+                if '/api/v3/search' in response.url and response.status == 200:
+                    try:
+                        data = response.json()
+                        layout = data.get('layout', [])
                         
-                        resolver = widget_data.get('resolver', {})
-                        if not resolver:
-                            continue
-                        
-                        resolver_data = resolver.get('data', {})
-                        if not resolver_data:
-                            continue
-                        
-                        items = resolver_data.get('items', [])
-                        if not items:
-                            continue
-                        
-                        # Check resolver type
-                        resolver_type = resolver.get('type', '')
-                        
-                        if resolver_type == 'product_grid':
-                            # Direct products in product_grid
-                            for item in items:
-                                extract_product_direct(item, products)
-                        else:
-                            # Other types (ads, etc.) may have nested PRODUCT_ITEM
-                            for item in items:
-                                if item.get('type') == 'PRODUCT_ITEM':
-                                    extract_product(item, products)
-                                elif 'data' in item:
-                                    nested_items = item.get('data', {}).get('items', [])
-                                    if nested_items:
-                                        for nested_item in nested_items:
-                                            if nested_item.get('type') == 'PRODUCT_ITEM':
-                                                extract_product(nested_item, products)
-                except:
-                    pass
-        
-        page.on('response', handle_response)
-        
-        # Navigate with optimal settings
-        url = f"https://www.zeptonow.com/search?query={search_query.replace(' ', '%20')}"
-        page.goto(url, timeout=15000, wait_until='domcontentloaded')
-        
-        # Wait for API response
-        page.wait_for_timeout(3000)
-        
-        browser.close()
-        
-        return products
+                        for widget in layout:
+                            widget_data = widget.get('data', {})
+                            if not widget_data:
+                                continue
+                            
+                            resolver = widget_data.get('resolver', {})
+                            if not resolver:
+                                continue
+                            
+                            resolver_data = resolver.get('data', {})
+                            if not resolver_data:
+                                continue
+                            
+                            items = resolver_data.get('items', [])
+                            if not items:
+                                continue
+                            
+                            # Check resolver type
+                            resolver_type = resolver.get('type', '')
+                            
+                            if resolver_type == 'product_grid':
+                                # Direct products in product_grid
+                                for item in items:
+                                    extract_product_direct(item, products)
+                            else:
+                                # Other types (ads, etc.) may have nested PRODUCT_ITEM
+                                for item in items:
+                                    if item.get('type') == 'PRODUCT_ITEM':
+                                        extract_product(item, products)
+                                    elif 'data' in item:
+                                        nested_items = item.get('data', {}).get('items', [])
+                                        if nested_items:
+                                            for nested_item in nested_items:
+                                                if nested_item.get('type') == 'PRODUCT_ITEM':
+                                                    extract_product(nested_item, products)
+                    except Exception as e:
+                        logger.debug(f"Failed to parse API response: {e}")
+            
+            page.on('response', handle_response)
+            
+            # Navigate with optimal settings
+            url = f"https://www.zeptonow.com/search?query={search_query.replace(' ', '%20')}"
+            page.goto(url, timeout=15000, wait_until='domcontentloaded')
+            
+            # Wait for API response
+            page.wait_for_timeout(3000)
+            
+    except Exception as e:
+        logger.error(f"Zepto scraper failed for '{search_query}': {e}")
+    finally:
+        if browser:
+            try:
+                browser.close()
+            except Exception:
+                pass
+    
+    return products
 
 def extract_product_direct(item, products_list):
     """Extract product directly from product_grid items (new API structure)"""
@@ -172,7 +184,7 @@ def extract_product_direct(item, products_list):
                 "in_stock": in_stock,
             })
     except Exception as e:
-        pass
+        logger.debug(f"Failed to extract product: {e}")
 
 def extract_product(item, products_list):
     """Extract product from PRODUCT_ITEM (nested structure - fallback)"""
@@ -211,8 +223,8 @@ def extract_product(item, products_list):
                 "product_url": product_url,
                 "in_stock": in_stock,
             })
-    except:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to extract nested product: {e}")
 
 # Required for app.py import
 def product_key(item):

@@ -3,8 +3,14 @@ Swiggy Instamart Product Scraper
 """
 
 from playwright.sync_api import sync_playwright
-from src.core.geocoding import geocode_address
 import threading
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Import geocoding only when not running as main (to avoid import issues in testing)
+if __name__ != "__main__":
+    from src.core.geocoding import geocode_address
 
 # Thread-local storage for Playwright instances
 _thread_local = threading.local()
@@ -158,7 +164,8 @@ def run_instamart_scraper(query, address):
         finally:
             page.close()
     
-    except Exception:
+    except Exception as e:
+        logger.error(f"Instamart scraper failed for '{query}': {e}")
         return []
 
 def cleanup():
@@ -173,3 +180,62 @@ def cleanup():
     
     if hasattr(_thread_local, 'context'):
         _thread_local.context = None
+
+
+# Test snippet
+if __name__ == "__main__":
+    import sys
+    import os
+    import time
+    
+    # Add project root to Python path for imports
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    import os
+    
+    # Add project root to Python path
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    sys.path.insert(0, project_root)
+    
+    # Import geocoding function for testing
+    from src.core.geocoding import geocode_address
+    
+    # Get query and address from command line or use defaults
+    query = sys.argv[1] if len(sys.argv) > 1 else "milk"
+    address = sys.argv[2] if len(sys.argv) > 2 else "Viman Nagar, Pune"
+    
+    print(f"\n🛒 Testing Instamart Scraper")
+    print(f"   Query: {query}")
+    print(f"   Address: {address}")
+    print("="*50)
+    
+    start_time = time.time()
+    
+    try:
+        products = run_instamart_scraper(query, address)
+        elapsed = time.time() - start_time
+        
+        if products:
+            print(f"\n✅ SUCCESS!")
+            print(f"   Found: {len(products)} products")
+            print(f"   Time: {elapsed:.2f}s")
+            print("\n📦 First 5 products:")
+            
+            for i, product in enumerate(products[:5], 1):
+                print(f"\n{i}. {product['name']}")
+                print(f"   Price: {product['price']}")
+                print(f"   Quantity: {product['quantity']}")
+                print(f"   In Stock: {product['in_stock']}")
+                if product['product_url']:
+                    print(f"   URL: {product['product_url']}")
+        else:
+            print(f"\n❌ No products found")
+            print(f"   Time: {elapsed:.2f}s")
+    
+    except Exception as e:
+        elapsed = time.time() - start_time
+        print(f"\n❌ ERROR after {elapsed:.2f}s:")
+        print(f"   {str(e)}")
+    
+    finally:
+        cleanup()
+        print(f"\n🧹 Cleanup completed")

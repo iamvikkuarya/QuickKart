@@ -1,6 +1,9 @@
 # dmart_scraper.py
 import requests
+import logging
 from .dmart_location import BASE_HEADERS
+
+logger = logging.getLogger(__name__)
 
 def run_dmart_scraper(query: str, store_id: str):
     """
@@ -40,7 +43,8 @@ def run_dmart_scraper(query: str, store_id: str):
                     "delivery_time": "N/A",  # ETA handled separately
                     "in_stock": sku.get("buyable") == "true"
                 })
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to parse DMart product: {e}")
                 continue
 
     return products
