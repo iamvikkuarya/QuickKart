@@ -197,40 +197,49 @@ def search():
     address = (data.get('address') or "").strip()
     pincode = (data.get('pincode') or "").strip() or "411038"
 
+    platform_filter = (data.get('platform') or "").strip().lower()
+
     if not query:
         return jsonify({"error": "Missing query"}), 400
 
     address = address if address else "Kothrud, Pune"
-    cache_key = make_cache_key(query, address, pincode)
+    # Update cache key to include platform filter so specific searches are cached separately
+    cache_key = f"{make_cache_key(query, address, pincode)}_{platform_filter}"
 
     # TTLCache handles expiration automatically
     if cache_key in cache:
-        logger.debug(f"Search cache hit for '{query}'")
+        logger.debug(f"Search cache hit for '{query}' (platform: {platform_filter})")
         return jsonify(cache[cache_key])
 
-    logger.info(f"Searching for '{query}' at {address}")
+    logger.info(f"Searching for '{query}' at {address} (platform: {platform_filter or 'all'})")
     results = []
     
     with ThreadPoolExecutor(max_workers=4) as ex:
-        fut_blinkit = ex.submit(run_scraper, query)
-        fut_zepto = ex.submit(run_zepto_scraper, query)
+        # Only submit tasks if no filter is set OR if the specific platform is requested
+        fut_blinkit = ex.submit(run_scraper, query) if (not platform_filter or platform_filter == 'blinkit') else None
+        fut_zepto = ex.submit(run_zepto_scraper, query) if (not platform_filter or platform_filter == 'zepto') else None
+        
         unique_id, store_id = get_store_details(pincode)
-        fut_dmart = ex.submit(run_dmart_scraper, query, store_id) if store_id else None
-        fut_instamart = ex.submit(run_instamart_scraper, query, address)
+        should_run_dmart = (store_id and (not platform_filter or platform_filter == 'dmart'))
+        fut_dmart = ex.submit(run_dmart_scraper, query, store_id) if should_run_dmart else None
+        
+        fut_instamart = ex.submit(run_instamart_scraper, query, address) if (not platform_filter or platform_filter == 'instamart') else None
 
-        try:
-            b = fut_blinkit.result(timeout=30) or []
-            results += b
-            logger.debug(f"Blinkit: {len(b)} products")
-        except Exception as e:
-            logger.warning(f"Blinkit scraper failed: {e}")
+        if fut_blinkit:
+            try:
+                b = fut_blinkit.result(timeout=30) or []
+                results += b
+                logger.debug(f"Blinkit: {len(b)} products")
+            except Exception as e:
+                logger.warning(f"Blinkit scraper failed: {e}")
 
-        try:
-            z = fut_zepto.result(timeout=30) or []
-            results += z
-            logger.debug(f"Zepto: {len(z)} products")
-        except Exception as e:
-            logger.warning(f"Zepto scraper failed: {e}")
+        if fut_zepto:
+            try:
+                z = fut_zepto.result(timeout=30) or []
+                results += z
+                logger.debug(f"Zepto: {len(z)} products")
+            except Exception as e:
+                logger.warning(f"Zepto scraper failed: {e}")
 
         if fut_dmart:
             try:
@@ -240,12 +249,13 @@ def search():
             except Exception as e:
                 logger.warning(f"DMart scraper failed: {e}")
         
-        try:
-            i = fut_instamart.result(timeout=30) or []
-            results += i
-            logger.debug(f"Instamart: {len(i)} products")
-        except Exception as e:
-            logger.warning(f"Instamart scraper failed: {e}")
+        if fut_instamart:
+            try:
+                i = fut_instamart.result(timeout=30) or []
+                results += i
+                logger.debug(f"Instamart: {len(i)} products")
+            except Exception as e:
+                logger.warning(f"Instamart scraper failed: {e}")
 
     # Save raw results into SQLite
     save_products(results)
